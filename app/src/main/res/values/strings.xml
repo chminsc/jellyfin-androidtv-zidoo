@@ -206,8 +206,6 @@
         Examples:\n smb://andy:1234@192.168.1.101/htpc-share/series\n nfs://192.168.1.101/home/andy/movies/:\n nfs://192.168.1.101/home/andy/:/series
     </string>
     <string name="btn_got_it">Got it</string>
-    <string name="lbl_current_queue">Current Queue</string>
-    <string name="desc_current_video_queue">Video items currently queued for playback</string>
     <string name="lbl_clear_queue">Clear Queue</string>
     <string name="lbl_play_next_up">Play Next Up</string>
     <string name="lbl_open">Open</string>
