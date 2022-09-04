@@ -901,7 +901,6 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
     private TextUnderButton shuffleButton = null;
     private TextUnderButton goToSeriesButton = null;
     private TextUnderButton queueButton = null;
-    private TextUnderButton deleteButton = null;
     private TextUnderButton moreButton = null;
     private TextUnderButton playButton = null;
     private TextUnderButton trailerButton = null;
@@ -1360,12 +1359,6 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
                     more.getMenu().getItem(5).setVisible(true);
                 }
 
-                if (deleteButton == null || ViewKt.isVisible(deleteButton)) {
-                    more.getMenu().getItem(6).setVisible(false);
-                } else if (deleteButton != null) {
-                    more.getMenu().getItem(6).setVisible(true);
-                }
-
                 more.show();
             }
         });
@@ -1411,7 +1404,6 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
         if (trailerButton != null) actionsList.add(trailerButton);
         if (favButton != null) actionsList.add(favButton);
         if (goToSeriesButton != null) actionsList.add(goToSeriesButton);
-        if (deleteButton != null) actionsList.add(deleteButton);
 
         // reverse the list so the less important actions are hidden first
         Collections.reverse(actionsList);
