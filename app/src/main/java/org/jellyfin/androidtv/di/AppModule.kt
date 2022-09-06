@@ -89,7 +89,7 @@ val appModule = module {
 	single<NotificationsRepository> { NotificationsRepositoryImpl(get(), get()) }
 
 	viewModel { StartupViewModel(get(), get(), get(), get()) }
-	viewModel { UserLoginViewModel(get(), get(), get()) }
+	viewModel { UserLoginViewModel(get(), get(), get(), get(defaultDeviceInfo)) }
 	viewModel { ServerAddViewModel(get()) }
 	viewModel { NextUpViewModel(get(), get(), get(), get()) }
 	viewModel { PictureViewerViewModel(get()) }
