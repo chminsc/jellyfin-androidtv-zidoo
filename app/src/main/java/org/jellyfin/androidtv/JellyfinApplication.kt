@@ -5,6 +5,8 @@ import android.content.Context
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
 import androidx.work.*
+import com.bumptech.glide.Glide
+import com.vanniktech.blurhash.BlurHash
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -69,6 +71,19 @@ class JellyfinApplication : Application() {
 //			JellyfinGlideModule.clearDiskCache()
 			autoBitrate.detect()
 		}
+	}
+
+	override fun onLowMemory() {
+		super.onLowMemory()
+
+		BlurHash.clearCache()
+		Glide.with(this).onLowMemory()
+	}
+
+	override fun onTrimMemory(level: Int) {
+		super.onTrimMemory(level)
+
+		Glide.with(this).onTrimMemory(level)
 	}
 
 	override fun attachBaseContext(base: Context?) {
