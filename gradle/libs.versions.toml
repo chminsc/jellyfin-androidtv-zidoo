@@ -104,7 +104,6 @@ markwon-html = { module = "io.noties.markwon:html", version.ref = "markwon" }
 
 # Image utility
 blurhash = { module = "com.vanniktech:blurhash", version.ref = "blurhash" }
-glide-compiler = { module = "com.github.bumptech.glide:compiler", version.ref = "glide" }
 glide-core = { module = "com.github.bumptech.glide:glide", version.ref = "glide" }
 glide-ksp = { module = "com.github.bumptech.glide:ksp", version.ref = "glide" }
 kenburnsview = { module = "com.flaviofaria:kenburnsview", version.ref = "kenburnsview" }
