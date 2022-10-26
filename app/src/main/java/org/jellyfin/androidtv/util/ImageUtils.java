@@ -34,8 +34,6 @@ public class ImageUtils {
     public static final double ASPECT_RATIO_BANNER = 1000.0 / 185.0;
     public static final double ASPECT_RATIO_SQUARE = 1.0;
 
-    public static final int MAX_PRIMARY_IMAGE_HEIGHT = 370;
-
     private static final List<BaseItemType> THUMB_FALLBACK_TYPES = Collections.singletonList(BaseItemType.Episode);
 
     public static Double getImageAspectRatio(@NonNull BaseItemDto item) {
@@ -55,7 +53,7 @@ public class ImageUtils {
     }
 
     @Nullable
-    public static String getPrimaryImageUrl(@NonNull BaseItemPerson item, int maxHeight) {
+    public static String getPrimaryImageUrl(@NonNull BaseItemPerson item, @Nullable Integer maxHeight) {
         if (Utils.isEmpty(item.getPrimaryImageTag())) {
             return null;
         }
@@ -63,7 +61,7 @@ public class ImageUtils {
     }
 
     @Nullable
-    public static String getPrimaryImageUrl(@NonNull SearchHint item, int maxHeight) {
+    public static String getPrimaryImageUrl(@NonNull SearchHint item, @Nullable Integer maxHeight) {
         if (Utils.isEmpty(item.getPrimaryImageTag())) {
             return null;
         }
@@ -83,43 +81,43 @@ public class ImageUtils {
 
         ImageOptions options = new ImageOptions();
         options.setTag(item.getImageTags().get(ImageType.Primary));
-        options.setMaxHeight(MAX_PRIMARY_IMAGE_HEIGHT);
+        options.setMaxHeight(ImageHelper.Companion.getMAX_PRIMARY_IMAGE_HEIGHT());
         options.setImageType(ImageType.Primary);
         return apiClient.GetImageUrl(item, options);
     }
 
     @Nullable
     public static String getPrimaryImageUrl(@NonNull BaseItemDto item) {
-        return KoinJavaComponent.<ImageHelper>get(ImageHelper.class).getPrimaryImageUrl(ModelCompat.asSdk(item), MAX_PRIMARY_IMAGE_HEIGHT);
+        return KoinJavaComponent.<ImageHelper>get(ImageHelper.class).getPrimaryImageUrl(ModelCompat.asSdk(item));
     }
 
     @Nullable
-    public static String getPrimaryImageUrl(@NonNull BaseItemDto item, int maxHeight) {
+    public static String getPrimaryImageUrl(@NonNull BaseItemDto item, @Nullable Integer maxHeight) {
         return KoinJavaComponent.<ImageHelper>get(ImageHelper.class).getPrimaryImageUrl(ModelCompat.asSdk(item), maxHeight);
     }
 
     @Nullable
-    public static String getImageUrl(@NonNull String itemId, @NonNull ImageType imageType, @NonNull String imageTag, Integer maxHeight) {
+    public static String getImageUrl(@NonNull String itemId, @NonNull ImageType imageType, @NonNull String imageTag, @Nullable Integer maxHeight) {
         return KoinJavaComponent.<ImageHelper>get(ImageHelper.class).getImageUrl(itemId, ModelCompat.asSdk(imageType), imageTag, maxHeight);
     }
 
     @Nullable
-    public static String getBannerImageUrl(@NonNull BaseItemDto item, int maxHeight) {
+    public static String getBannerImageUrl(@NonNull BaseItemDto item, @Nullable Integer maxHeight) {
         return KoinJavaComponent.<ImageHelper>get(ImageHelper.class).getImageUrl(ModelCompat.asSdk(item), org.jellyfin.sdk.model.api.ImageType.BANNER, true, maxHeight, null);
     }
 
     @Nullable
-    public static String getThumbImageUrl(@NonNull BaseItemDto item, int maxHeight) {
+    public static String getThumbImageUrl(@NonNull BaseItemDto item, @Nullable Integer maxHeight) {
         return KoinJavaComponent.<ImageHelper>get(ImageHelper.class).getImageUrl(ModelCompat.asSdk(item), org.jellyfin.sdk.model.api.ImageType.THUMB, true, maxHeight, null);
     }
 
     @Nullable
-    public static String getThumbImageUrl(@NonNull BaseItemDto item, int maxHeight, boolean requireImageTag, boolean preferSeries, boolean preferSeason) {
+    public static String getThumbImageUrl(@NonNull BaseItemDto item, @Nullable Integer maxHeight, boolean requireImageTag, boolean preferSeries, boolean preferSeason) {
         return KoinJavaComponent.<ImageHelper>get(ImageHelper.class).getImageUrl(ModelCompat.asSdk(item), org.jellyfin.sdk.model.api.ImageType.THUMB, requireImageTag, maxHeight, null, false, preferSeries, preferSeason);
     }
 
     @Nullable
-    public static String getBackdropImageUrl(@NonNull BaseItemDto item, int maxHeight) {
+    public static String getBackdropImageUrl(@NonNull BaseItemDto item, @Nullable Integer maxHeight) {
         return KoinJavaComponent.<ImageHelper>get(ImageHelper.class).getImageUrl(ModelCompat.asSdk(item), org.jellyfin.sdk.model.api.ImageType.BACKDROP, true, maxHeight, null);
     }
 
