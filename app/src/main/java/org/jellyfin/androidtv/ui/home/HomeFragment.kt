@@ -3,18 +3,27 @@ package org.jellyfin.androidtv.ui.home
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import androidx.core.view.ViewCompat
 import androidx.leanback.widget.ArrayObjectAdapter
+import androidx.leanback.widget.VerticalGridView
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.auth.repository.UserRepository
+import org.jellyfin.androidtv.constant.CardInfoType
 import org.jellyfin.androidtv.constant.HomeSectionType
 import org.jellyfin.androidtv.data.repository.NotificationsRepository
 import org.jellyfin.androidtv.preference.UserPreferences
 import org.jellyfin.androidtv.preference.UserSettingPreferences
-import org.jellyfin.androidtv.preference.UserSettingPreferences.Companion.homeScalingFactor
-import org.jellyfin.androidtv.preference.UserSettingPreferences.Companion.homeScalingFactorMyMedia
+import org.jellyfin.androidtv.preference.UserSettingPreferences.Companion.cardInfoType
+import org.jellyfin.androidtv.preference.UserSettingPreferences.Companion.homeSize
+import org.jellyfin.androidtv.preference.UserSettingPreferences.Companion.seriesThumbnailsEnabled
 import org.jellyfin.androidtv.ui.browsing.BrowseRowDef
 import org.jellyfin.androidtv.ui.browsing.MainActivity
 import org.jellyfin.androidtv.ui.browsing.RowLoader
@@ -22,8 +31,9 @@ import org.jellyfin.androidtv.ui.browsing.StdRowsFragment
 import org.jellyfin.androidtv.ui.playback.AudioEventListener
 import org.jellyfin.androidtv.ui.playback.MediaManager
 import org.jellyfin.androidtv.ui.presentation.CardPresenter
-import org.jellyfin.androidtv.ui.presentation.PositionableListRowPresenter
+import org.jellyfin.androidtv.util.LayoutHelper
 import org.jellyfin.androidtv.util.apiclient.callApi
+import org.jellyfin.androidtv.util.setMarginTop
 import org.jellyfin.apiclient.interaction.ApiClient
 import org.jellyfin.apiclient.model.livetv.RecommendedProgramQuery
 import org.jellyfin.apiclient.model.querying.ItemsResult
@@ -37,13 +47,12 @@ class HomeFragment : StdRowsFragment(), AudioEventListener {
 	private val userPreferences by inject<UserPreferences>()
 	private val userRepository by inject<UserRepository>()
 	private val notificationsRepository by inject<NotificationsRepository>()
-	private val helper by lazy { HomeFragmentHelper(requireContext(), userRepository) }
+	private val helper by lazy { HomeFragmentHelper(requireContext(), userRepository, userSettingPreferences) }
 
 	// Data
 	private val rows = mutableListOf<HomeFragmentRow>()
 	private var views: ItemsResult? = null
 	private var includeLiveTvRows: Boolean = false
-	private var staticHeight: Int = CardPresenter.DEFAULT_STATIC_HEIGHT
 
 	// Special rows
 	private val notificationsRow by lazy { NotificationsHomeFragmentRow(lifecycleScope, notificationsRepository) }
@@ -57,26 +66,17 @@ class HomeFragment : StdRowsFragment(), AudioEventListener {
 		homeSettingsUiHash = userSettingPreferences.getUiSettingsHash() + userPreferences.getUiSettingsHash()
 
 		// Create adapter/presenter and set it to parent
-		mRowsAdapter = ArrayObjectAdapter(PositionableListRowPresenter())
+		mRowsAdapter = ArrayObjectAdapter(LayoutHelper.buildDefaultRowPresenterSelector(
+			userSettingPreferences[homeSize].value,
+			resources.getDimensionPixelSize(R.dimen.safe_area_vertical))
+		)
 		adapter = mRowsAdapter
 
-		// set home scaling
-		val homeScalePct = userSettingPreferences[homeScalingFactor]
-		if (homeScalePct != 100 && homeScalePct > 0) {
-			staticHeight = (CardPresenter.DEFAULT_STATIC_HEIGHT * (homeScalePct / 100.0)).toInt()
-		}
-
-		mCardPresenter = CardPresenter(true, staticHeight)
+		mCardPresenter = CardPresenter(userSettingPreferences[cardInfoType], null)
 			.setAllowBackdropFallback(true)
-			.setAllowParentFallback(userSettingPreferences[UserSettingPreferences.seriesThumbnailsEnabled])
-			.setPreferSeasonForEpisodes(userSettingPreferences[UserSettingPreferences.seriesThumbnailsEnabled])
-			.setPreferSeriesForEpisodes(userSettingPreferences[UserSettingPreferences.seriesThumbnailsEnabled])
-
-		val homeScaleMyMediaPct = userSettingPreferences[homeScalingFactorMyMedia]
-		if (homeScaleMyMediaPct != 100 && homeScaleMyMediaPct > 0) {
-//			mCardPresenter.setStaticHeightScaleFactorForType(BaseItemType.CollectionFolder, (homeScaleMyMediaPct / 100.0))
-//			mCardPresenter.setStaticHeightScaleFactorForType(BaseItemType.UserView, (homeScaleMyMediaPct / 100.0))
-		}
+			.setAllowParentFallback(userSettingPreferences[seriesThumbnailsEnabled])
+			.setPreferSeasonForEpisodes(userSettingPreferences[seriesThumbnailsEnabled])
+			.setPreferSeriesForEpisodes(userSettingPreferences[seriesThumbnailsEnabled])
 
 		super.onCreate(savedInstanceState)
 
@@ -84,25 +84,34 @@ class HomeFragment : StdRowsFragment(), AudioEventListener {
 		mediaManager.addAudioEventListener(this)
 	}
 
-	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-		super.onViewCreated(view, savedInstanceState)
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+		return super.onCreateView(inflater, container, savedInstanceState)?.apply {
+			// Make sure to focus the cards instead of the toolbar
+			ViewCompat.setFocusedByDefault(this, true)
 
-		// Make sure to focus the cards instead of the toolbar
-		ViewCompat.setFocusedByDefault(view, true)
+			(this as? VerticalGridView)?.apply {
+//				itemAlignmentOffsetPercent = WINDOW_ALIGN_OFFSET_PERCENT_DISABLED
+//				windowAlignmentOffsetPercent = WINDOW_ALIGN_OFFSET_PERCENT_DISABLED
+//				windowAlignmentOffsetPercent = 100f / userSettingPreferences[numHomeRowsScreen]
+//				itemAlignmentOffsetPercent = 0f
+				itemAlignmentOffset = -LayoutHelper.getToolbarHeight().div(2) + 1
+
+				setMarginTop(resources.getDimensionPixelSize(R.dimen.safe_area_vertical))
+			}
+		}
 	}
 
 	override fun onResume() {
 		super.onResume()
 
 		if (homeSettingsUiHash != (userSettingPreferences.getUiSettingsHash() + userPreferences.getUiSettingsHash())) {
+			mediaManager.setManagedAudioQueuePresenter(null)
+			mediaManager.createManagedAudioQueue(true)
 			val intent = Intent(context, MainActivity::class.java)
 			// Clear navigation history
 			intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_TASK_ON_HOME)
-			activity?.startActivity(intent)
 			activity?.finish()
-
-			mediaManager.setManagedAudioQueuePresenter(null)
-			mediaManager.createManagedAudioQueue(true)
+			activity?.startActivity(intent)
 		}
 		// Update audio queue
 		Timber.i("Updating audio queue in HomeFragment (onResume)")
@@ -176,10 +185,11 @@ class HomeFragment : StdRowsFragment(), AudioEventListener {
 			// Add sections to layout
 			withContext(Dispatchers.Main) {
 				// Add rows in order
-				notificationsRow.addToRowsAdapter(requireContext(), mCardPresenter, mRowsAdapter)
-				nowPlaying.addToRowsAdapter(requireContext(), mCardPresenter, mRowsAdapter)
-				for (row in rows) row.addToRowsAdapter(requireContext(), mCardPresenter, mRowsAdapter)
-
+				notificationsRow.addToRowsAdapter(requireContext(), CardPresenter(CardInfoType.UNDER_MINI, null), mRowsAdapter)
+				nowPlaying.addToRowsAdapter(requireContext(), CardPresenter(userSettingPreferences[cardInfoType], null), mRowsAdapter)
+				rows.forEach {
+					it.addToRowsAdapter(requireContext(), mCardPresenter, mRowsAdapter)
+				}
 				// Manually set focus if focusedByDefault is not available
 				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) view?.requestFocus()
 			}
@@ -190,7 +200,7 @@ class HomeFragment : StdRowsFragment(), AudioEventListener {
 		when (type) {
 			HomeSectionType.LATEST_MEDIA -> rows.add(helper.loadRecentlyAdded(views!!))
 			HomeSectionType.LIBRARY_TILES_SMALL -> rows.add(helper.loadLibraryTiles())
-//			HomeSectionType.LIBRARY_BUTTONS -> rows.add(helper.loadLibraryTiles())
+			HomeSectionType.LIBRARY_BUTTONS -> rows.add(helper.loadLibraryTiles(true))
 			HomeSectionType.RESUME -> rows.add(helper.loadResumeVideo())
 			HomeSectionType.RESUME_AUDIO -> rows.add(helper.loadResumeAudio())
 			HomeSectionType.RESUME_BOOK -> Unit // Books are not (yet) supported
