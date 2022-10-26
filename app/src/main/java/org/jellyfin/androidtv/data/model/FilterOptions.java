@@ -8,6 +8,7 @@ import java.util.List;
 public class FilterOptions {
     private boolean favoriteOnly;
     private boolean unwatchedOnly;
+    private boolean noneEmptyOnly;
 
     public void setFavoriteOnly(boolean value) {
         favoriteOnly = value;
@@ -17,12 +18,20 @@ public class FilterOptions {
         unwatchedOnly = value;
     }
 
+    public void setNoneEmptyOnly(boolean value) {
+        noneEmptyOnly = value;
+    }
+
     public boolean isUnwatchedOnly() {
         return unwatchedOnly;
     }
 
     public boolean isFavoriteOnly() {
         return favoriteOnly;
+    }
+
+    public boolean isNoneEmptyOnly() {
+        return noneEmptyOnly;
     }
 
     public ItemFilter[] getFilters() {
