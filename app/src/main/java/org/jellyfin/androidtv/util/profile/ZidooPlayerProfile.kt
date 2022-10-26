@@ -7,7 +7,7 @@ import org.jellyfin.apiclient.model.dlna.*
 @Suppress("MagicNumber")
 class ZidooPlayerProfile(
 	isDTSEnabled: Boolean = false,
-	isExtraSurroundEnabled: Boolean = false,
+	forceCompliantSurroundCodecs: Boolean = false,
 	forcedAudioCodec: String? = null,
 	forceNumChannels: Int? = null
 ) : DeviceProfile() {
@@ -49,6 +49,65 @@ class ZidooPlayerProfile(
 		Codec.Audio.MLP,
 	)
 
+	private val codecsVideo = arrayOf(
+		Codec.Video.H264,
+		Codec.Video.HEVC,
+		Codec.Video.MPEG,
+		Codec.Video.MPEG2VIDEO,
+		Codec.Video.VP8,
+		Codec.Video.VP9,
+		Codec.Video.VC1,
+	)
+
+	private val containerVideo = arrayOf(
+		Codec.Container.`3GP`,
+		Codec.Container.ASF,
+		Codec.Container.AVI,
+		Codec.Container.DVR_MS,
+		Codec.Container.ISO,
+		Codec.Container.M2V,
+		Codec.Container.M4V,
+		Codec.Container.MKV,
+		Codec.Container.MOV,
+		Codec.Container.MP4,
+		Codec.Container.MPEG,
+		Codec.Container.MPEGTS,
+		Codec.Container.OGV,
+		Codec.Container.TS,
+		Codec.Container.VOB,
+		Codec.Container.WEBM,
+		Codec.Container.WMV,
+		Codec.Container.WTV,
+		Codec.Container.XVID,
+	)
+
+	private val containerAudio = arrayOf(
+		Codec.Audio.APE,
+		Codec.Audio.AAC,
+//		Codec.Audio.DFF,
+//		Codec.Audio.DSF,
+		Codec.Audio.FLAC,
+		Codec.Audio.MP2,
+		Codec.Audio.MP3,
+		Codec.Audio.MPA,
+		Codec.Audio.OGA,
+		Codec.Audio.OGG,
+		Codec.Audio.OPUS,
+		Codec.Audio.SPX,
+		Codec.Audio.PCM,
+		Codec.Audio.WAV,
+		Codec.Audio.WEBMA,
+		Codec.Audio.WMA,
+	)
+
+	private val containerPhoto = arrayOf(
+		"jpg",
+		"jpeg",
+		"png",
+		"gif",
+		"webp",
+	)
+
 	init {
 		name = "AndroidTV-Zidoo-External"
 		maxStaticBitrate = 200_000_000 // 200 mbps
@@ -56,70 +115,31 @@ class ZidooPlayerProfile(
 		musicStreamingTranscodingBitrate = 3_584_000 // max server flac bitrate
 
 		directPlayProfiles = arrayOf(
-		DirectPlayProfile().apply {
+			// Video direct play
+			DirectPlayProfile().apply {
 				type = DlnaProfileType.Video
-				container = arrayOf(
-					Codec.Container.`3GP`,
-					Codec.Container.ASF,
-					Codec.Container.AVI,
-					Codec.Container.DVR_MS,
-					Codec.Container.M2V,
-					Codec.Container.M4V,
-					Codec.Container.MKV,
-					Codec.Container.MOV,
-					Codec.Container.MP4,
-					Codec.Container.MPEG,
-					Codec.Container.MPEGTS,
-					Codec.Container.MPG,
-					Codec.Container.OGM,
-					Codec.Container.OGV,
-					Codec.Container.TS,
-					Codec.Container.VOB,
-					Codec.Container.WEBM,
-					Codec.Container.WMV,
-					Codec.Container.WTV,
-					Codec.Container.XVID
-				).joinToString(",")
-
-				videoCodec = arrayOf(
-					Codec.Video.H264,
-					Codec.Video.HEVC,
-					Codec.Video.VP8,
-					Codec.Video.VP9,
-					Codec.Video.MPEG,
-					Codec.Video.MPEG2VIDEO
-				).joinToString(",")
-
+				container = containerVideo.joinToString(",")
+				videoCodec = codecsVideo.joinToString(",")
 				audioCodec = forcedAudioCodec ?: buildList {
 					addAll(codecsDolby + codecsCommon + codecsPcm + codecsRare)
 					if (isDTSEnabled) addAll(codecsDTS)
 				}.joinToString(",")
 			},
 			// Audio direct play
-			ProfileHelper.audioDirectPlayProfile(arrayOf(
-					Codec.Audio.APE,
-					Codec.Audio.AAC,
-//						Codec.Audio.DFF,
-//						Codec.Audio.DSF,
-					Codec.Audio.FLAC,
-					Codec.Audio.MP2,
-					Codec.Audio.MP3,
-					Codec.Audio.MPA,
-					Codec.Audio.OGA,
-					Codec.Audio.OGG,
-					Codec.Audio.OPUS,
-					Codec.Audio.SPX,
-					Codec.Audio.PCM,
-					Codec.Audio.WAV,
-					Codec.Audio.WEBMA,
-					Codec.Audio.WMA,
-			)),
+			DirectPlayProfile().apply {
+				type = DlnaProfileType.Audio
+				container = containerAudio.joinToString(",")
+			},
 			// Photo direct play
-			ProfileHelper.photoDirectPlayProfile
+			DirectPlayProfile().apply {
+				type = DlnaProfileType.Photo
+				container = containerPhoto.joinToString(",")
+			}
 		)
 
-		// NOTE: We get major issues in HLS mode, subs/seek crash the dvd-player
 		transcodingProfiles = arrayOf(
+
+			// NOTE: We get major issues in HLS mode, subs/seek crash the dvd-player
 //			TranscodingProfile().apply {
 //				type = DlnaProfileType.Video
 //				context = EncodingContext.Streaming
@@ -131,21 +151,21 @@ class ZidooPlayerProfile(
 //				}.joinToString(",")
 //				audioCodec = forcedAudioCodec ?: buildList {
 //					addAll(codecsDolby)
-//					if (isDTSEnabled) add(Codec.Audio.DTS)
-//					if (isExtraSurroundEnabled) addAll(codecsCommon)
+////					if (isDTSEnabled) add(Codec.Audio.DTS)
+////					if (isExtraSurroundEnabled) addAll(codecsCommon)
+//					add(Codec.Audio.AAC)
 //				}.joinToString(",")
 //				maxAudioChannels = forceNumChannels?.toString() ?: "8"
 ////				enableMpegtsM2TsMode = true
 ////				enableSubtitlesInManifest = true
 ////				copyTimestamps = true
-//				segmentLength = 5
-//				minSegments = 2
+//				segmentLength = 20
+//				minSegments = 0
 ////				estimateContentLength = true
 ////				setBreakOnNonKeyFrames(true)
 ////				requiresPlainVideoItems = true
 ////				requiresPlainFolders = true
 //			},
-
 			// NOTE: seeking will not work in mkv mode!
 			TranscodingProfile().apply {
 				type = DlnaProfileType.Video
@@ -158,7 +178,7 @@ class ZidooPlayerProfile(
 				audioCodec = forcedAudioCodec ?: buildList {
 					addAll(codecsDolby + codecsPcm)
 					if (isDTSEnabled) addAll(codecsDTS)
-					if (isExtraSurroundEnabled) addAll(codecsCommon + codecsRare)
+					if (!forceCompliantSurroundCodecs) addAll(codecsCommon + codecsRare)
 				}.joinToString(",")
 				copyTimestamps = false
 				maxAudioChannels = forceNumChannels?.toString() ?: "8"
@@ -187,7 +207,7 @@ class ZidooPlayerProfile(
 			// Audio-channels: Dolby is 6,8 with atmos at 7.1.4
 			ProfileHelper.maxAudioChannelsCodecProfile(codecsDolby + codecsPcm, forceNumChannels ?: 8),
 			if (isDTSEnabled) ProfileHelper.maxAudioChannelsCodecProfile(codecsDTS, forceNumChannels ?: 8) else null,
-			if (isExtraSurroundEnabled)
+			if (!forceCompliantSurroundCodecs)
 				ProfileHelper.maxAudioChannelsCodecProfile(codecsCommon + codecsRare, forceNumChannels ?: 8)
 			else
 				ProfileHelper.maxAudioChannelsCodecProfile(codecsCommon + codecsRare, 2)
