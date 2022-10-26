@@ -1,50 +1,93 @@
 package org.jellyfin.androidtv.ui.presentation;
 
-import android.view.View;
-
-import androidx.core.view.ViewKt;
-import androidx.leanback.widget.ListRow;
 import androidx.leanback.widget.ListRowPresenter;
 import androidx.leanback.widget.RowPresenter;
 
+import org.jellyfin.androidtv.preference.UserPreferences;
+import org.jellyfin.androidtv.util.LayoutHelper;
+import org.jellyfin.androidtv.util.Utils;
+import org.koin.java.KoinJavaComponent;
+
 public class CustomListRowPresenter extends ListRowPresenter {
-    private View viewHolder;
-    private Integer topPadding;
+    protected ListRowPresenter.ViewHolder viewHolder;
+    public final Integer rowHeightPx;
+    public final Integer headerHeightPx;
 
     public CustomListRowPresenter() {
-        super();
-
-        setHeaderPresenter(new CustomRowHeaderPresenter());
+        super(KoinJavaComponent.<UserPreferences>get(UserPreferences.class).get(UserPreferences.Companion.getFocusZoomSize()).getValue(),false); // dimmer = per card/item dimm-effect
+        var containerHeights = LayoutHelper.INSTANCE.getDefaultRowHeights();
+        this.rowHeightPx = containerHeights.getFirst();
+        this.headerHeightPx = containerHeights.getSecond();
+        init();
     }
 
-    public CustomListRowPresenter(Integer topPadding) {
-        super();
-        this.topPadding = topPadding;
-
-        setHeaderPresenter(new CustomRowHeaderPresenter());
+    public CustomListRowPresenter(int rowHeightPx, int headerHeightPx) {
+        super(KoinJavaComponent.<UserPreferences>get(UserPreferences.class).get(UserPreferences.Companion.getFocusZoomSize()).getValue(),false); // dimmer = per card/item dimm-effect
+        this.rowHeightPx = rowHeightPx;
+        this.headerHeightPx = headerHeightPx;
+        init();
     }
 
+    private void init() {
+        setSelectEffectEnabled(KoinJavaComponent.<UserPreferences>get(UserPreferences.class).get(UserPreferences.Companion.getEnableFocusDimming())); // row select dimming
+        setKeepChildForeground(false); // use dimming without extra helper overlay frames
+        enableChildRoundedCorners(false);
+        setShadowEnabled(false);
+
+        setHeaderPresenter(new CustomRowHeaderPresenter(headerHeightPx, 0));
+        getHeaderPresenter().setNullItemVisibilityGone(true);
+
+        setRowHeight(rowHeightPx);
+    }
+
+    public int getRowContainerHeight() {
+        return rowHeightPx + headerHeightPx;
+    }
     @Override
     public boolean isUsingDefaultShadow() {
         return false;
     }
+    @Override
+    public boolean isUsingDefaultListSelectEffect() {
+        return true;
+    }
+
+//    @Override
+//    public boolean isUsingOutlineClipping(Context context) {
+//        return true;
+//    }
 
     @Override
-    protected void onSelectLevelChanged(RowPresenter.ViewHolder holder) {
-        // Do nothing - this removes the shadow on the out of focus rows of image cards
+    protected boolean isClippingChildren() {
+        return false;
     }
 
     @Override
-    protected void onBindRowViewHolder(RowPresenter.ViewHolder holder, Object item) {
-        super.onBindRowViewHolder(holder, item);
+    protected void initializeRowViewHolder(RowPresenter.ViewHolder holder) {
+        viewHolder = (ViewHolder) holder;
 
-        viewHolder = (View) holder.view.getParent();
-
-        if (topPadding != null) {
-            viewHolder.setPadding(viewHolder.getPaddingLeft(), topPadding, viewHolder.getPaddingRight(), viewHolder.getPaddingBottom());
+        if (viewHolder != null && viewHolder.getGridView() != null) {
+            var gridView = viewHolder.getGridView();
+            var cardSpacing = KoinJavaComponent.<UserPreferences>get(UserPreferences.class).get(UserPreferences.Companion.getCardSpacing());
+            var spacingPX = Utils.convertDpToPixel(
+                    viewHolder.view.getContext(),
+                    cardSpacing.getSizeDP()
+            );
+            gridView.setHorizontalSpacing(spacingPX);
         }
 
-        // Hide header view when the item doesn't have one
-        ViewKt.setVisible(holder.getHeaderViewHolder().view, !(item instanceof ListRow && ((ListRow) item).getHeaderItem() == null));
+        super.initializeRowViewHolder(holder);
     }
+
+//    @Override
+//    protected void onBindRowViewHolder(RowPresenter.ViewHolder holder, Object item) {
+//        // Hide header view when the item doesn't have one
+//        if (holder.getHeaderViewHolder() != null) {
+//            if (item instanceof ListRow) {
+//                var headerItem = ((ListRow) item).getHeaderItem();
+//                ViewKt.setVisible(holder.getHeaderViewHolder().view, headerItem != null);
+//            }
+//        }
+//        super.onBindRowViewHolder(holder, item);
+//    }
 }
