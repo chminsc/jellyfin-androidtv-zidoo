@@ -45,7 +45,7 @@
             android:layout_height="match_parent"
             android:layout_gravity="center" />
 
-        <org.jellyfin.androidtv.ui.shared.StrokeTextView
+        <org.jellyfin.androidtv.ui.StrokeTextView
             android:id="@+id/subtitles_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -131,8 +131,12 @@
         <org.jellyfin.androidtv.ui.ClockUserView
             android:id="@+id/textClock"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:layout_height="@dimen/user_clock_height"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent"
+            android:layout_marginTop="@dimen/safe_area_vertical"
+            android:layout_marginEnd="@dimen/safe_area_horizontal_large"
+            tools:layout_width="200dp"
+            />
     </androidx.constraintlayout.widget.ConstraintLayout>
 </FrameLayout>
