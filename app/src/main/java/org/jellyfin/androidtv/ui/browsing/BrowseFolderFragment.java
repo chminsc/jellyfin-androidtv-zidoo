@@ -19,7 +19,6 @@ public class BrowseFolderFragment extends StdBrowseFragment {
         mFolder = Json.Default.decodeFromString(BaseItemDto.Companion.serializer(), intent.getStringExtra(GroupedItemsActivity.EXTRA_FOLDER));
         includeType = intent.getStringExtra(GroupedItemsActivity.EXTRA_INCLUDE_TYPE);
         MainTitle = mFolder.getName();
-        ShowBadge = false;
 
         Timber.d("Item type: %s", includeType);
 
