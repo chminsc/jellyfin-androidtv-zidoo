@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
-    <string name="app_name_release" translatable="false" tools:ignore="UnusedResources">Jellyfin</string>
-    <string name="app_name_debug" translatable="false" tools:ignore="UnusedResources">Jellyfin Debug</string>
     <string name="video_error_unknown_error">Failed to load video</string>
     <string name="loading">Loading…</string>
     <string name="btn_cancel">Cancel</string>
@@ -80,6 +78,7 @@
     <string name="lbl_valid_server_address">Please enter the server address (IP or domain/machine name)</string>
     <string name="lbl_ok">Ok</string>
     <string name="lbl_born">"Born "</string>
+    <string name="lbl_died">"Died "</string>
     <string name="lbl_loading_elipses">Loading…</string>
     <string name="msg_playback_not_allowed">Playback not allowed at this time</string>
     <string name="msg_playback_restricted">The administrator has restricted playback of this item at this time</string>
@@ -104,6 +103,8 @@
     <string name="lbl_load_channels">"Load Channels "</string>
     <string name="lbl_today">Today</string>
     <string name="lbl_tomorrow">Tomorrow</string>
+    <string name="lbl_present">Present</string>
+    <string name="lbl_ended_nocaps">Ended</string>
     <string name="lbl_on">On </string>
     <string name="lbl_tune_to_channel">Tune to Channel</string>
     <string name="msg_recording_now">Recording Now</string>
@@ -123,7 +124,6 @@
     <string name="lbl_audio_output">Audio output</string>
     <string name="lbl_goto_series">Go to Series</string>
     <string name="lbl_enable_debug">Debug options</string>
-    <string name="lbl_show_zidoo_playback_popup">Show debug playback popup</string>
     <string name="desc_debug">Provide extra information for debugging</string>
     <string name="lbl_showing">Showing</string>
     <string name="lbl_all_items">All Items</string>
@@ -141,6 +141,7 @@
     <string name="btn_done">Done</string>
     <string name="lbl_display_preferences">Display</string>
     <string name="lbl_library_preferences">Library Preferences</string>
+    <string name="lbl_library_general_preferences">General</string>
     <string name="lbl__continuing"> CONTINUING </string>
     <string name="lbl_ended"> ENDED </string>
     <string name="btn_filter">Filter</string>
@@ -196,6 +197,11 @@
     <string name="lbl_subtitle_track">Select subtitle track</string>
     <string name="msg_external_path">This feature will only work if you have properly set up your library on the server with network paths or path substitution and the client you are using can directly access these locations over the network.\n
         Path substitution is the \'Shared network folder:\' option on the server, in library/folders.\n\n
+        Formats:\n smb://smb_user:smb_password@server_ip/share/folder\n nfs://server_ip/nfs_export\n nfs://server_ip/nfs_export/media \n\n
+        Examples:\n smb://andy:1234@192.168.1.101/htpc-share/series\n nfs://192.168.1.101/home/andy/movies\n nfs://192.168.1.101/home/andy/series
+    </string>
+    <string name="msg_external_path_legacy">This feature will only work if you have properly set up your library on the server with network paths or path substitution and the client you are using can directly access these locations over the network.\n
+        Path substitution is the \'Shared network folder:\' option on the server, in library/folders.\n\n
         Formats:\n smb://smb_user:smb_password@server_ip/share/folder\n nfs://server_ip/nfs_export/:\n nfs://server_ip/nfs_export/:/media \n\n
         Examples:\n smb://andy:1234@192.168.1.101/htpc-share/series\n nfs://192.168.1.101/home/andy/movies/:\n nfs://192.168.1.101/home/andy/:/series
     </string>
@@ -205,18 +211,13 @@
     <string name="lbl_clear_queue">Clear Queue</string>
     <string name="lbl_play_next_up">Play Next Up</string>
     <string name="lbl_open">Open</string>
-    <string name="lbl_show_backdrop">Show backdrops</string>
+    <string name="lbl_show_backdrop">Backdrops Display</string>
     <string name="pref_show_backdrop_description">Change background image to selected items</string>
     <string name="lbl_show_premieres">Show season premieres</string>
     <string name="desc_premieres">Show a row of new episode pilots for any series you watch</string>
     <string name="lbl_bitstream_dts">Bitstream DTS audio</string>
     <string name="lbl_dts_enabled_device">DTS capable device</string>
     <string name="desc_dts_enabled_device">Is tv, receiver capable of decoding DTS audio?</string>
-    <string name="lbl_enable_extra_surround_codecs">Enable none bitstream surround codecs</string>
-    <string name="desc_enable_extra_surround_codecs">Allow 5.1 audio output for more codecs (aac, ogg, opus, flac).</string>
-    <string name="lbl_force_stereo_audio">Force Stereo audio</string>
-    <string name="desc_force_stereo_audio">Downmix all audio to Stereo via server transcode.</string>
-    <string name="lbl_forced_audio_codec">Force audio codec</string>
     <string name="lbl_no_forced_subs">No forced subtitle</string>
     <string name="desc_no_forced_subs">Do not display forced subtitles.</string>
     <string name="lbl_allow_same_lang_subs">Allow same language subtitles</string>
@@ -297,6 +298,7 @@
     <string name="lbl_start_favorites">Place Favorites at Beginning</string>
     <string name="lbl_image_type">Image Type</string>
     <string name="lbl_image_size">Image Size</string>
+    <string name="lbl_grid_size">Number of Rows/Columns</string>
     <string name="lbl_my_media">My Media</string>
     <string name="pref_theme_dark">Dark (Default)</string>
     <string name="pref_theme_emerald">Classic Emerald</string>
@@ -368,10 +370,19 @@
     <string name="watch_count_overflow">99+</string>
     <string name="lbl_stars">Stars</string>
     <string name="lbl_tomatoes">Tomatoes</string>
-    <string name="pref_default_rating">Default rating type</string>
+    <string name="pref_default_rating">Card-Rating display</string>
+    <string name="pref_card_infotype">Card-Info display</string>
+    <string name="pref_enable_focus_dimming">Use Focus dimming</string>
+    <string name="pref_card_spacing">Card-Spacing</string>
+    <string name="pref_card_color_bg">Card-Background color</string>
+    <string name="pref_card_focus_zoom_size">Card-Focus zoom size</string>
+    <string name="pref_card_focus_border_size">Card-Focus border size</string>
+    <string name="pref_card_focus_border_color">Card-Focus border color</string>
+    <string name="pref_card_focus_icon_size">Card-Focus icon size</string>
     <string name="pref_hide_parental_ratings">Hide parental rating\'s</string>
     <string name="pref_hide_card_ratings">Hide rating\'s on card\'s</string>
     <string name="pref_clock_display">Show clock</string>
+    <string name="pref_card_corners">Card-Corner rounding</string>
     <string name="lbl_always">Always</string>
     <string name="pref_clock_display_browsing">While browsing</string>
     <string name="pref_clock_display_playback">During playback</string>
@@ -403,6 +414,26 @@
     <string name="image_size_medium">Medium</string>
     <string name="image_size_large">Large</string>
     <string name="image_size_xlarge">Extra-Large</string>
+    <string name="focus_border_minimal">Minimal</string>
+    <string name="focus_border_thin">Thin</string>
+    <string name="focus_border_normal">Normal</string>
+    <string name="focus_border_thick">Thick</string>
+    <string name="lbl_card_info_style">Card-Info style</string>
+    <string name="card_spaceing_adaptive">Adaptive by zoom</string>
+    <string name="card_spaceing_widest">Widest</string>
+    <string name="card_spaceing_wide">Wide</string>
+    <string name="card_spaceing_normal">Normal</string>
+    <string name="card_spaceing_narrow">Narrow</string>
+    <string name="card_spaceing_zero">Zero</string>
+    <string name="card_spaceing_minimal">Minimal</string>
+    <string name="card_info_type_noinfo">Hidden</string>
+    <string name="card_info_type_overlay">Overlay</string>
+    <string name="card_info_type_overlay_icon">Overlay + Icon</string>
+    <string name="card_info_type_under_mini">Under Compact</string>
+    <string name="card_info_type_under_full">Under Full</string>
+    <string name="bg_type_normal">Normal Quality</string>
+    <string name="bg_type_hq">High Quality</string>
+    <string name="bg_type_low">Reduced Quality</string>
     <string name="pref_developer_link">Developer options</string>
     <string name="pref_developer_link_description">Advanced and experimental features</string>
     <string name="lbl_hidden">Hidden</string>
@@ -483,8 +514,7 @@
     <string name="home_section_none">None</string>
     <string name="home_section_i">Home section %1$d</string>
     <string name="home_section_settings">Home settings</string>
-    <string name="pref_home_ui_scaleing">Home scaling</string>
-    <string name="pref_home_ui_scaleing_media">My Media extra scaling</string>
+    <string name="pref_home_size">Home-screen size</string>
     <string name="searchable_hint">Search Jellyfin</string>
     <string name="searchable_settings_description">Media</string>
     <string name="pref_subtitles_background_title">Enable background</string>
@@ -502,14 +532,16 @@
     <string name="pref_accounts">Accounts</string>
     <string name="pref_behavior">Behavior</string>
     <string name="pref_browsing">Browsing</string>
+    <string name="lbl_card_styles">Card styles</string>
+    <string name="lbl_card_focus_styles">Card-Focus styles</string>
     <string name="pref_theme">Theme</string>
-    <string name="pref_home_description">Configure shown sections</string>
+    <string name="pref_home_description">Configure Home screen</string>
     <string name="pref_libraries">Libraries</string>
     <string name="pref_libraries_description">Change how libraries are displayed</string>
     <string name="pref_login">Login</string>
     <string name="pref_login_description">Servers, accounts, automatic sign in</string>
-    <string name="pref_customization_description">Theme, home, remapping</string>
-    <string name="pref_playback_description">Video, subtitles, live tv, next up</string>
+    <string name="pref_customization_description">Theme, home, cards</string>
+    <string name="pref_playback_description">Video, audio, subtitles, live tv, next up</string>
     <string name="pref_video">Video</string>
     <string name="pref_subtitles">Subtitles</string>
     <string name="pref_audio">Audio</string>
@@ -547,4 +579,13 @@
     <string name="pref_clear_audio_queue_on_exit">Clear audio queue on app exit</string>
     <string name="enable_picture_viewer_title">Enable new picture viewer</string>
     <string name="episode_name_special">special</string>
+    <string name="pref_transcode_link">Transcode options</string>
+    <string name="pref_transcode_link_description">Setup server transcode rules</string>
+    <string name="lbl_forced_audio_codec">Always Transcode video-audio into:</string>
+    <string name="lbl_transcode_force_bitstream_surround_codec">Force HDMI-bitstream compliant multichannel audio format.</string>
+    <string name="desc_transcode_force_bitstream_surround_codec">Transcode none compliant (aac, ogg, opus, flac) multichannel audio formats, into AC3.</string>
+    <string name="lbl_force_stereo_audio">Force Stereo audio</string>
+    <string name="desc_force_stereo_audio">Transcode multichannel audio into Stereo.</string>
+    <string name="lbl_show_transcode_info_popup">Show transcode info popup</string>
+    <string name="desc_show_transcode_info_popup">Show a info popup before playback, if a transcode is happening.</string>
 </resources>
