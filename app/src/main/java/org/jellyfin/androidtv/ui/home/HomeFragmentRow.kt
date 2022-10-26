@@ -5,5 +5,5 @@ import androidx.leanback.widget.ArrayObjectAdapter
 import org.jellyfin.androidtv.ui.presentation.CardPresenter
 
 interface HomeFragmentRow {
-	fun addToRowsAdapter(context: Context, cardPresenter: CardPresenter, rowsAdapter: ArrayObjectAdapter)
+	fun addToRowsAdapter(context: Context, presenter: CardPresenter, rowsAdapter: ArrayObjectAdapter)
 }

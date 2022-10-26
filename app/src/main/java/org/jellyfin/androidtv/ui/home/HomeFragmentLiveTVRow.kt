@@ -3,13 +3,7 @@ package org.jellyfin.androidtv.ui.home
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import androidx.leanback.widget.ArrayObjectAdapter
-import androidx.leanback.widget.HeaderItem
-import androidx.leanback.widget.ListRow
-import androidx.leanback.widget.OnItemViewClickedListener
-import androidx.leanback.widget.Presenter
-import androidx.leanback.widget.Row
-import androidx.leanback.widget.RowPresenter
+import androidx.leanback.widget.*
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jellyfin.androidtv.R
@@ -26,13 +20,13 @@ import org.jellyfin.androidtv.ui.presentation.GridButtonPresenter
 import org.jellyfin.androidtv.util.Utils
 import org.jellyfin.sdk.model.api.BaseItemDto
 import org.jellyfin.sdk.model.api.BaseItemKind
-import java.util.UUID
+import java.util.*
 
 class HomeFragmentLiveTVRow(
 	private val activity: Activity,
 	private val userRepository: UserRepository,
 ) : HomeFragmentRow, OnItemViewClickedListener {
-	override fun addToRowsAdapter(context: Context, cardPresenter: CardPresenter, rowsAdapter: ArrayObjectAdapter) {
+	override fun addToRowsAdapter(context: Context, presenter: CardPresenter, rowsAdapter: ArrayObjectAdapter) {
 		val header = HeaderItem(rowsAdapter.size().toLong(), activity.getString(R.string.pref_live_tv_cat))
 		val adapter = ArrayObjectAdapter(GridButtonPresenter())
 

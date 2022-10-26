@@ -5,10 +5,14 @@ import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.auth.repository.UserRepository
 import org.jellyfin.androidtv.constant.ChangeTriggerType
 import org.jellyfin.androidtv.constant.ImageType
-import org.jellyfin.androidtv.constant.QueryType
 import org.jellyfin.androidtv.data.querying.StdItemQuery
 import org.jellyfin.androidtv.data.querying.ViewQuery
+import org.jellyfin.androidtv.preference.UserSettingPreferences
+import org.jellyfin.androidtv.preference.UserSettingPreferences.Companion.cardInfoType
 import org.jellyfin.androidtv.ui.browsing.BrowseRowDef
+import org.jellyfin.androidtv.util.SmallListRow
+import org.jellyfin.androidtv.util.SmallListRowAbs
+import org.jellyfin.androidtv.util.ThumbListRow
 import org.jellyfin.apiclient.model.entities.LocationType
 import org.jellyfin.apiclient.model.entities.SortOrder
 import org.jellyfin.apiclient.model.livetv.RecommendedProgramQuery
@@ -23,14 +27,15 @@ import org.jellyfin.sdk.model.constant.MediaType
 class HomeFragmentHelper(
 	private val context: Context,
 	private val userRepository: UserRepository,
+	private val userSettingPreferences: UserSettingPreferences
 ) {
 	fun loadRecentlyAdded(views: ItemsResult): HomeFragmentRow {
-		return HomeFragmentLatestRow(context, userRepository, views)
+		return HomeFragmentLatestRow(context, userRepository, userSettingPreferences, views)
 	}
 
-	fun loadLibraryTiles(): HomeFragmentRow {
+	fun loadLibraryTiles(isButtonRow: Boolean = false): HomeFragmentRow {
 		val query = ViewQuery()
-		return HomeFragmentBrowseRowDefRow(BrowseRowDef(context.getString(R.string.lbl_my_media), query))
+		return HomeFragmentBrowseRowDefRow(BrowseRowDef(context.getString(R.string.lbl_my_media), query), if(isButtonRow) SmallListRowAbs::class else SmallListRow::class)
 	}
 
 	fun loadResume(title: String, includeMediaTypes: Array<String>): HomeFragmentRow {
@@ -47,7 +52,7 @@ class HomeFragmentHelper(
 			sortOrder = SortOrder.Descending
 		}
 
-		return HomeFragmentBrowseRowDefRow(BrowseRowDef(title, query, arrayOf(ChangeTriggerType.VideoQueueChange, ChangeTriggerType.TvPlayback, ChangeTriggerType.MoviePlayback)))
+		return HomeFragmentBrowseRowDefRow(BrowseRowDef(title, query, DEFAULT_TRIGGERS), ThumbListRow::class, userSettingPreferences[cardInfoType], ImageType.THUMB)
 	}
 
 	fun loadResumeVideo(): HomeFragmentRow {
@@ -71,7 +76,7 @@ class HomeFragmentHelper(
 			limit = ITEM_LIMIT_RECORDINGS
 		}
 
-		return HomeFragmentBrowseRowDefRow(BrowseRowDef(context.getString(R.string.lbl_recordings), query))
+		return HomeFragmentBrowseRowDefRow(BrowseRowDef(context.getString(R.string.lbl_recordings), query), cardInfoType = userSettingPreferences[cardInfoType])
 	}
 
 	fun loadNextUp(): HomeFragmentRow {
@@ -86,7 +91,7 @@ class HomeFragmentHelper(
 			)
 		}
 
-		return HomeFragmentBrowseRowDefRow(BrowseRowDef(context.getString(R.string.lbl_next_up), query, arrayOf(ChangeTriggerType.TvPlayback)))
+		return HomeFragmentBrowseRowDefRow(BrowseRowDef(context.getString(R.string.lbl_next_up), query, DEFAULT_TRIGGERS), ThumbListRow::class, userSettingPreferences[cardInfoType], ImageType.THUMB)
 	}
 
 	fun loadOnNow(): HomeFragmentRow {
@@ -104,7 +109,7 @@ class HomeFragmentHelper(
 			limit = ITEM_LIMIT_ON_NOW
 		}
 
-		return HomeFragmentBrowseRowDefRow(BrowseRowDef(context.getString(R.string.lbl_on_now), query))
+		return HomeFragmentBrowseRowDefRow(BrowseRowDef(context.getString(R.string.lbl_on_now), query), cardInfoType = userSettingPreferences[cardInfoType])
 	}
 
 	companion object {
@@ -113,5 +118,6 @@ class HomeFragmentHelper(
 		private const val ITEM_LIMIT_RECORDINGS = 40
 		private const val ITEM_LIMIT_NEXT_UP = 50
 		private const val ITEM_LIMIT_ON_NOW = 20
+		internal val DEFAULT_TRIGGERS = arrayOf(ChangeTriggerType.VideoQueueChange, ChangeTriggerType.TvPlayback, ChangeTriggerType.MoviePlayback, ChangeTriggerType.LibraryUpdated)
 	}
 }
