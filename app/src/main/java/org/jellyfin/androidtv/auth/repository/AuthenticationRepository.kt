@@ -4,25 +4,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import org.jellyfin.androidtv.auth.model.AccountManagerAccount
-import org.jellyfin.androidtv.auth.model.AuthenticateMethod
-import org.jellyfin.androidtv.auth.model.AuthenticatedState
-import org.jellyfin.androidtv.auth.model.AuthenticatingState
-import org.jellyfin.androidtv.auth.model.AuthenticationStoreUser
-import org.jellyfin.androidtv.auth.model.AutomaticAuthenticateMethod
-import org.jellyfin.androidtv.auth.model.CredentialAuthenticateMethod
-import org.jellyfin.androidtv.auth.model.LoginState
-import org.jellyfin.androidtv.auth.model.PrivateUser
-import org.jellyfin.androidtv.auth.model.QuickConnectAuthenticateMethod
-import org.jellyfin.androidtv.auth.model.RequireSignInState
-import org.jellyfin.androidtv.auth.model.Server
-import org.jellyfin.androidtv.auth.model.ServerUnavailableState
-import org.jellyfin.androidtv.auth.model.ServerVersionNotSupported
-import org.jellyfin.androidtv.auth.model.User
+import org.jellyfin.androidtv.auth.model.*
 import org.jellyfin.androidtv.auth.store.AccountManagerStore
 import org.jellyfin.androidtv.auth.store.AuthenticationPreferences
 import org.jellyfin.androidtv.auth.store.AuthenticationStore
-import org.jellyfin.androidtv.util.ImageUtils
+import org.jellyfin.androidtv.util.ImageHelper.Companion.MAX_PRIMARY_IMAGE_HEIGHT
 import org.jellyfin.androidtv.util.sdk.forUser
 import org.jellyfin.sdk.Jellyfin
 import org.jellyfin.sdk.api.client.ApiClient
@@ -37,7 +23,7 @@ import org.jellyfin.sdk.model.api.AuthenticationResult
 import org.jellyfin.sdk.model.api.ImageType
 import org.jellyfin.sdk.model.api.UserDto
 import timber.log.Timber
-import java.util.Date
+import java.util.*
 
 /**
  * Repository to manage authentication of the user in the app.
@@ -197,7 +183,7 @@ class AuthenticationRepositoryImpl(
 			userId = user.id,
 			tag = tag,
 			imageType = ImageType.PRIMARY,
-			maxHeight = ImageUtils.MAX_PRIMARY_IMAGE_HEIGHT
+			maxHeight = MAX_PRIMARY_IMAGE_HEIGHT
 		)
 	}
 }
