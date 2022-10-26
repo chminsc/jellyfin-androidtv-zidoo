@@ -2,11 +2,13 @@
 <resources>
     <declare-styleable name="JellyfinTheme">
         <!-- Toolbar Attributes -->
-        <attr name="toolbarBackground" format="reference|color" />
+        <attr name="toolbarBackgroundSolid" format="reference|color" />
+        <attr name="toolbarBackgroundOverlay" format="reference|color" />
         <!-- Header Text Color -->
         <attr name="headerTextColor" format="reference|color" />
         <!-- Progress Bar Attributes -->
         <attr name="progressBackground" format="reference|color" />
+        <attr name="progressBackgroundFocus" format="reference|color" />
         <attr name="progressPrimary" format="reference|color" />
         <attr name="progressSecondary" format="reference|color" />
         <!-- CardView Attributes -->
@@ -16,6 +18,10 @@
         <attr name="cardRounding" format="dimension" />
         <attr name="buttonRounding" format="dimension" />
         <attr name="inputRounding" format="dimension" />
+
+        <attr name="cardScaleDefault" format="fraction"/>
+        <attr name="cardScaleFocus" format="fraction"/>
+
         <attr name="popupMenuRounding" format="dimension" />
         <attr name="buttonDefaultNormalBackground" format="reference|color" />
         <attr name="buttonDefaultHighlightBackground" format="reference|color" />
@@ -33,9 +39,55 @@
     </declare-styleable>
     <declare-styleable name="StrokeTextView">
         <attr name="strokeWidth" format="float" />
+        <attr name="strokeColor" format="reference|color" />
     </declare-styleable>
     <declare-styleable name="AsyncImageView">
+    <!-- The duration of the crossfade when changing switching the images of the url, blurhash and placeholder.-->
         <attr name="crossfadeDuration" format="integer" />
-        <attr name="circleCrop" format="boolean" />
+        <attr name="scaleTypeGlide" format="enum">
+            <enum name="none" value="0" />
+            <enum name="at_least" value="1" />
+            <enum name="at_most" value="2" />
+            <enum name="fit_center" value="3" />
+            <enum name="center_inside" value="4" />
+            <enum name="center_outside" value="5" />
+        </attr>
+        <attr name="cropTypeGlide" format="enum">
+            <enum name="none" value="0" />
+            <!-- CenterCrop the image and keeps one dimension, but does not maintain aspect.-->
+            <enum name="center_crop" value="1" />
+            <!-- Shape the image to a circle and remove all corners.-->
+            <enum name="circle_crop" value="2" />
+        </attr>
+    </declare-styleable>
+    <declare-styleable name="InfoRowView">
+        <attr name="textSize" format="dimension" />
+        <attr name="imageMarginVertical" format="dimension" />
+        <attr name="blockText_sizeOffset" format="dimension" />
+        <attr name="outlineText_sizeOffset" format="dimension" />
+    </declare-styleable>
+
+    <attr name="heightPct" format="fraction" />
+    <attr name="widthPct" format="fraction" />
+    <declare-styleable name="RelativeLayoutAbs">
+        <attr name="heightPct" />
+        <attr name="widthPct" />
+    </declare-styleable>
+    <declare-styleable name="LinearLayoutAbs">
+        <attr name="heightPct" />
+        <attr name="widthPct" />
+        <attr name="dividerSize" format="dimension" />
+    </declare-styleable>
+    <declare-styleable name="FrameLayoutAbs">
+        <attr name="heightPct" />
+        <attr name="widthPct" />
+    </declare-styleable>
+    <declare-styleable name="SpaceAbs">
+        <attr name="heightPct" />
+        <attr name="widthPct" />
+    </declare-styleable>
+    <declare-styleable name="TextViewAbs">
+        <attr name="heightPct" />
+        <attr name="widthPct" />
     </declare-styleable>
 </resources>
