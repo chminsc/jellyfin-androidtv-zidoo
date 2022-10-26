@@ -47,7 +47,7 @@ class HomeFragmentLatestRow(
 						BaseItemKind.MOVIE.serialName,
 //						BaseItemKind.SERIES.serialName,
 						BaseItemKind.MUSIC_ALBUM.serialName,
-						BaseItemKind.RECORDING.serialName,
+//						BaseItemKind.RECORDING.serialName,
 						BaseItemKind.AUDIO_BOOK.serialName,
 					)
 				}
