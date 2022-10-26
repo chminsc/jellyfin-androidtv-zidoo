@@ -1,34 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<org.jellyfin.androidtv.ui.shared.ToolbarView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
+<org.jellyfin.androidtv.ui.ToolbarView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+
     android:layout_height="wrap_content"
-    app:toolbarBackground="@color/transparent">
+    android:layout_width="wrap_content"
+    android:layout_alignParentTop="true"
+    android:layout_alignParentEnd="true"
+    android:layout_marginTop="3dp"
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="end"
-        android:orientation="horizontal">
+    tools:background="@color/red"
+    tools:context=".ui.browsing.MainActivity">
 
-        <ImageButton
-            android:id="@+id/help"
-            style="@style/Button.Icon"
-            android:layout_width="41dp"
-            android:layout_height="41dp"
-            android:contentDescription="@string/help"
-            android:src="@drawable/ic_help" />
+    <ImageButton
+        android:id="@+id/help"
+        style="@style/Button.Icon"
+        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:adjustViewBounds="true"
+        android:scaleType="centerCrop"
+        android:contentDescription="@string/help"
+        android:src="@drawable/ic_help"
+        />
 
-        <Space
-            android:layout_width="8dp"
-            android:layout_height="0dp" />
+    <ImageButton
+        android:id="@+id/settings"
+        style="@style/Button.Icon"
+        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:adjustViewBounds="true"
+        android:scaleType="centerCrop"
+        android:contentDescription="@string/lbl_settings"
+        android:src="@drawable/ic_settings" />
 
-        <ImageButton
-            android:id="@+id/settings"
-            style="@style/Button.Icon"
-            android:layout_width="41dp"
-            android:layout_height="41dp"
-            android:contentDescription="@string/lbl_settings"
-            android:src="@drawable/ic_settings" />
-    </LinearLayout>
-</org.jellyfin.androidtv.ui.shared.ToolbarView>
+</org.jellyfin.androidtv.ui.ToolbarView>
