@@ -14,6 +14,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
+import androidx.leanback.widget.Presenter;
 
 import com.google.android.exoplayer2.ExoPlayer;
 import com.google.android.exoplayer2.MediaItem;
@@ -47,8 +48,8 @@ import org.jellyfin.apiclient.model.dto.BaseItemType;
 import org.jellyfin.apiclient.model.playlists.PlaylistCreationRequest;
 import org.jellyfin.apiclient.model.playlists.PlaylistCreationResult;
 import org.jellyfin.sdk.model.DeviceInfo;
-import org.jellyfin.sdk.model.constant.MediaType;
 import org.jellyfin.sdk.model.api.BaseItemKind;
+import org.jellyfin.sdk.model.constant.MediaType;
 import org.koin.java.KoinJavaComponent;
 import org.videolan.libvlc.LibVLC;
 import org.videolan.libvlc.Media;
@@ -70,7 +71,7 @@ public class MediaManager {
     private ItemRowAdapter mCurrentAudioQueue;
     private ItemRowAdapter mManagedAudioQueue;
 
-    private CardPresenter mManagedAudioQueuePresenter;
+    private Presenter mManagedAudioQueuePresenter;
 
     private List<Integer>  mUnShuffledAudioQueueIndexes;
 
@@ -168,7 +169,7 @@ public class MediaManager {
         return mManagedAudioQueue;
     }
 
-    public void setManagedAudioQueuePresenter(@Nullable CardPresenter presenter)
+    public void setManagedAudioQueuePresenter(@Nullable Presenter presenter)
     {
         mManagedAudioQueuePresenter = presenter;
     }
@@ -190,7 +191,7 @@ public class MediaManager {
                 for (int i = getCurrentAudioQueuePosition(); i < mCurrentAudioQueue.size(); i++) {
                     managedItems.add(((BaseRowItem)mCurrentAudioQueue.get(i)).getBaseItem());
                 }
-                CardPresenter presenter = mManagedAudioQueuePresenter != null ? mManagedAudioQueuePresenter : new CardPresenter(true, Utils.convertDpToPixel(context, 150));
+                Presenter presenter = mManagedAudioQueuePresenter != null ? mManagedAudioQueuePresenter : new CardPresenter(true, Utils.convertDpToPixel(context, 150));
                 mManagedAudioQueue = new ItemRowAdapter(context, managedItems, QueryType.StaticAudioQueueItems, presenter, null);
                 mManagedAudioQueue.Retrieve();
             }
@@ -1012,7 +1013,7 @@ public class MediaManager {
     }
 
     public BaseRowItem getMediaItem(int pos) {
-        return mCurrentMediaAdapter != null && mCurrentMediaAdapter.size() > pos ? (BaseRowItem) mCurrentMediaAdapter.get(pos) : null;
+        return (pos >= 0 && mCurrentMediaAdapter != null && mCurrentMediaAdapter.size() > pos) ? (BaseRowItem) mCurrentMediaAdapter.get(pos) : null;
     }
 
     public BaseRowItem getCurrentMediaItem() { return getMediaItem(mCurrentMediaPosition); }
