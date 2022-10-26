@@ -33,18 +33,25 @@ class UserPreferencesScreen : OptionsFragment() {
 			}
 
 			link {
+				setTitle(R.string.pref_transcode_link)
+				setContent(R.string.pref_transcode_link_description)
+				icon = R.drawable.ic_lightbulb
+				withFragment<TranscodePreferenceScreen>()
+			}
+
+			link {
 				setTitle(R.string.pref_telemetry_category)
 				setContent(R.string.pref_telemetry_description)
 				icon = R.drawable.ic_error
 				withFragment<CrashReportingPreferencesScreen>()
 			}
 
-			link {
-				setTitle(R.string.pref_developer_link)
-				setContent(R.string.pref_developer_link_description)
-				icon = R.drawable.ic_flask
-				withFragment<DeveloperPreferencesScreen>()
-			}
+//			link {
+//				setTitle(R.string.pref_developer_link)
+//				setContent(R.string.pref_developer_link_description)
+//				icon = R.drawable.ic_flask
+//				withFragment<DeveloperPreferencesScreen>()
+//			}
 		}
 
 		aboutCategory()

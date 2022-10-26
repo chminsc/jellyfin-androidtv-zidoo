@@ -3,12 +3,12 @@ package org.jellyfin.androidtv.preference
 import android.content.Context
 import android.view.KeyEvent
 import androidx.preference.PreferenceManager
+import org.jellyfin.androidtv.constant.*
 import org.jellyfin.androidtv.preference.constant.*
 import org.jellyfin.androidtv.util.DeviceUtils
 import org.jellyfin.preference.booleanPreference
 import org.jellyfin.preference.enumPreference
 import org.jellyfin.preference.intPreference
-import org.jellyfin.preference.migration.putEnum
 import org.jellyfin.preference.store.SharedPreferenceStore
 import org.jellyfin.preference.stringPreference
 
@@ -27,7 +27,7 @@ class UserPreferences(context: Context) : SharedPreferenceStore(
 		 */
 		const val MAX_BITRATE_AUTO = "0"
 
-		/* Display */
+/* Display */
 		/**
 		 * Select the app theme
 		 */
@@ -36,14 +36,14 @@ class UserPreferences(context: Context) : SharedPreferenceStore(
 		/**
 		 * Enable background images while browsing
 		 */
-		var backdropEnabled = booleanPreference("pref_show_backdrop", true)
+		var backdropType = enumPreference("pref_backdrop_type", BackgroundType.NORMAL)
 
 		/**
 		 * Show premieres on home screen
 		 */
 		var premieresEnabled = booleanPreference("pref_enable_premieres", false)
 
-		/* Playback - General*/
+/* Playback - General*/
 		/**
 		 * Maximum bitrate in megabit for playback. A value of [MAX_BITRATE_AUTO] is used when
 		 * the bitrate should be automatically detected.
@@ -53,12 +53,12 @@ class UserPreferences(context: Context) : SharedPreferenceStore(
 		/**
 		 * Auto-play next item
 		 */
-		var mediaQueuingEnabled = booleanPreference("pref_enable_tv_queuing", true)
+		var mediaQueuingEnabled = booleanPreference("pref_enable_tv_queuing", false)
 
 		/**
 		 * Enable the next up screen or not
 		 */
-		var nextUpBehavior = enumPreference("next_up_behavior", NextUpBehavior.EXTENDED)
+		var nextUpBehavior = enumPreference("next_up_behavior", NextUpBehavior.MINIMAL)
 
 		/**
 		 * Next up timeout before playing next item
@@ -76,7 +76,7 @@ class UserPreferences(context: Context) : SharedPreferenceStore(
 		 */
 		var cinemaModeEnabled = booleanPreference("pref_enable_cinema_mode", false)
 
-		/* Playback - Video */
+/* Playback - Video */
 		/**
 		 * Preferred video player.
 		 */
@@ -91,11 +91,6 @@ class UserPreferences(context: Context) : SharedPreferenceStore(
 		 * Send a path instead to the external player
 		 */
 		var externalVideoPlayerSendPath = booleanPreference("pref_send_path_external", false)
-
-		/**
-		 * Allow transcoding fallback in DirectPath Mode
-		 */
-		var useLegacySendPath = booleanPreference("pref_use_legacy_sendpath", false)
 
 		/**
 		 * Allow transcoding fallback in DirectPath Mode
@@ -123,7 +118,7 @@ class UserPreferences(context: Context) : SharedPreferenceStore(
 		 */
 		var libVLCAudioDelay = intPreference("libvlc_audio_delay", 0)
 
-		/* Live TV */
+/* Live TV */
 		/**
 		 * Use direct play
 		 */
@@ -144,11 +139,11 @@ class UserPreferences(context: Context) : SharedPreferenceStore(
 		 */
 		var shortcutSubtitleTrack = intPreference("shortcut_subtitle_track", KeyEvent.KEYCODE_CAPTIONS)
 
-		/* Developer options */
+/* Developer options */
 		/**
-		 * Show playback toast/popup
+		 * Show transcode toast/popup
 		 */
-		var showZidooPlaybackPopup = booleanPreference("prewf_show_zidoo_playback_popup", false)
+		var showTranscodePlaybackPopup = booleanPreference("pref_show_transcode_playback_popup", false)
 
 		/**
 		 * Show additional debug information
@@ -171,35 +166,38 @@ class UserPreferences(context: Context) : SharedPreferenceStore(
 		var clockBehavior = enumPreference("pref_clock_behavior", ClockBehavior.ALWAYS)
 
 		/**
-		 * Set which ratings provider should show on MyImageCardViews
-		 */
-		var defaultRatingType = enumPreference("pref_rating_type", RatingType.RATING_STARS)
-
-		/**
-		 * Disable display of Ratings for Card's only (Icons, text)
-		 */
-		val hideCardRatings = booleanPreference("pref_hide_card_ratings", false)
-
-		/**
 		 * Disable display of Age-Restriction information (Text, Tags)
 		 */
 		var hideParentalRatings = booleanPreference("pref_hide_parental_ratings", false)
 
-		/**
-		 * Clear audio queue on App exit.
-		 */
-		var clearAudioQueueOnExit = booleanPreference("pref_clear_audio_queue_on_exit", false)
-
+/* Card Styles */
 		/**
 		 * Set when watched indicators should show on MyImageCardViews
 		 */
 		var watchedIndicatorBehavior = enumPreference("pref_watched_indicator_behavior", WatchedIndicatorBehavior.ALWAYS)
 
 		/**
-		 * Enable series thumbnails in home screen rows
+		 * Set which ratings provider should show on MyImageCardViews
 		 */
-		var seriesThumbnailsEnabled = booleanPreference("pref_enable_series_thumbnails", true)
+		var defaultRatingType = enumPreference("pref_rating_type", RatingType.RATING_TOMATOES)
 
+		var enableFocusDimming = booleanPreference("pref_enable_focus_dimming", true)
+
+		var focusZoomSize = enumPreference("pref_focus_zoom_size", FocusZoomSize.SMALL)
+
+		var cardSpacing = enumPreference("pref_card_spacing", CardSpacing.NORMAL)
+
+		var cardColorBG = enumPreference("pref_card_color_bg", ColorSelectionBG.SOLID_GREY_DARK)
+
+		var focusBorderSize = enumPreference("pref_focus_border_size", FocusBorderSize.NORMAl)
+
+		var focusBorderColor = enumPreference("pref_focus_border_color", ColorSelection.JELLYFIN_BLUE)
+
+		var focusIconSize = enumPreference("pref_focus_icon_size", FocusIconSize.MED)
+
+		var cardCornerRounding = intPreference("pref_card_corner_rounding", 8)
+
+/* Audio, Subtitles */
 		/**
 		 * Enable subtitles background
 		 */
@@ -223,12 +221,12 @@ class UserPreferences(context: Context) : SharedPreferenceStore(
 		/**
 		 * DTS capable audio device
 		 */
-		var dtsCapableDevice = booleanPreference("pref_dts_capable_device", false)
+		var dtsCapableDevice = booleanPreference("pref_dts_capable_device", true)
 
 		/**
-		 * Enable none bitstream surround codecs
+		 * Force bitstream compliant surround codecs
 		 */
-		var enableExtraSurroundCodecs = booleanPreference("pref_enable_extra_surround_codecs", false)
+		var forceBitstreamCompliantSurroundCodecs = booleanPreference("pref_force_bitstream_compliant_surround_codecs", false)
 
 		/**
 		 * Forced audio codec
@@ -254,58 +252,44 @@ class UserPreferences(context: Context) : SharedPreferenceStore(
 		 * Use SDH subtitles
 		 */
 		var useSdhSubtitles = booleanPreference("pref_use_sdh_subtitles", false)
+
+/* App Behaviour */
+		/**
+		 * Clear audio queue on App exit.
+		 */
+		var clearAudioQueueOnExit = booleanPreference("pref_clear_audio_queue_on_exit", false)
 	}
 
-	init {
-		// Note: Create a single migration per app version
-		// Note: Migrations are never executed for fresh installs
-		runMigrations {
-			// v0.10.x to v0.11.x
-			migration(toVersion = 2) {
-				// Migrate to video player enum
-				// Note: This is the only time we need to check if the value is not set yet because the version numbers were reset
-				if (!it.contains("video_player"))
-					putEnum("video_player", if (it.getBoolean("pref_video_use_external", false)) PreferredVideoPlayer.EXTERNAL else PreferredVideoPlayer.AUTO)
-			}
-
-			// v0.11.x to v0.12.x
-			migration(toVersion = 5) {
-				// Migrate to audio behavior enum
-				putEnum("audio_behavior", if (it.getString("pref_audio_option", "0") == "1") AudioBehavior.DOWNMIX_TO_STEREO else AudioBehavior.DIRECT_STREAM)
-
-				// Migrate live tv player to use enum
-				putEnum("live_tv_video_player",
-					when {
-						it.getBoolean("pref_live_tv_use_external", false) -> PreferredVideoPlayer.EXTERNAL
-						it.getBoolean("pref_enable_vlc_livetv", false) -> PreferredVideoPlayer.VLC
-						else -> PreferredVideoPlayer.AUTO
-					})
-
-				// Change audio delay type from long to int
-				putInt("libvlc_audio_delay", it.getLong("libvlc_audio_delay", 0).toInt())
-
-				// Disable AC3 (Dolby Digital) on Fire Stick Gen 1 devices
-				if (DeviceUtils.isFireTvStickGen1()) putBoolean("pref_bitstream_ac3", false)
-			}
-
-			// v0.13.3 to v0.13.4
-			migration(toVersion = 6) {
-				putEnum("refresh_rate_switching_behavior",
-					when {
-						it.getBoolean("pref_refresh_switching", false) -> RefreshRateSwitchingBehavior.SCALE_ON_TV
-						else -> RefreshRateSwitchingBehavior.DISABLED
-					})
-			}
-		}
-	}
+//	init {
+//		// Note: Create a single migration per app version
+//		// Note: Migrations are never executed for fresh installs
+//		runMigrations {
+//			// v0.13.3 to v0.13.4
+//			migration(toVersion = 6) {
+//				putEnum("refresh_rate_switching_behavior",
+//					when {
+//						it.getBoolean("pref_refresh_switching", false) -> RefreshRateSwitchingBehavior.SCALE_ON_TV
+//						else -> RefreshRateSwitchingBehavior.DISABLED
+//					})
+//			}
+//		}
+//	}
 
 	fun getUiSettingsHash(): Int {
 		return this[appTheme].hashCode() +
-				this[backdropEnabled].hashCode() +
+				this[backdropType].hashCode() +
 				this[premieresEnabled].hashCode() +
 				this[clockBehavior].hashCode() +
 				this[defaultRatingType].hashCode() +
 				this[hideParentalRatings].hashCode() +
-				this[watchedIndicatorBehavior].hashCode()
+				this[watchedIndicatorBehavior].hashCode() +
+				this[focusZoomSize].hashCode() +
+				this[focusBorderSize].hashCode() +
+				this[focusBorderColor].hashCode() +
+				this[focusIconSize].hashCode() +
+				this[enableFocusDimming].hashCode() +
+				this[cardCornerRounding].hashCode() +
+				this[cardSpacing].hashCode() +
+				this[cardColorBG].hashCode()
 	}
 }
