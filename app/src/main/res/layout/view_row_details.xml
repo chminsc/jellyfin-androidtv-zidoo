@@ -1,184 +1,184 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<org.jellyfin.androidtv.ui.LinearLayoutAbs
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    xmlns:tools="http://schemas.android.com/tools"
 
-    <RelativeLayout
+    app:heightPct="@fraction/details_info_layout_height_pct"
+    android:layout_height="0dp"
+    android:layout_width="match_parent"
+    android:gravity="center_vertical"
+    app:dividerSize="20dp"
+    android:paddingTop="@dimen/safe_area_vertical"
+    android:paddingHorizontal="@dimen/safe_area_horizontal"
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    >
+
+    <LinearLayout
         android:id="@+id/leftFrame"
-        android:layout_width="170dp"
-        android:layout_height="420dp"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true">
+        android:layout_weight="25"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="end"
+        tools:ignore="RtlSymmetry"
+        >
 
         <TextView
             android:id="@+id/infoTitle1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentEnd="true"
-            android:layout_marginTop="185dp"
             android:textAlignment="viewEnd"
             android:textAllCaps="true"
-            android:textSize="14sp" />
+            android:textColor="?android:textColorSecondary"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif"
+            tools:text="infoTitle1"
+            />
 
         <TextView
             android:id="@+id/infoValue1"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/infoTitle1"
-            android:layout_alignParentEnd="true"
-            android:alpha=".6"
             android:textAlignment="viewEnd"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            tools:text="infoValue1"
+            />
 
         <TextView
             android:id="@+id/infoTitle2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/infoValue1"
-            android:layout_alignParentEnd="true"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="15dp"
             android:textAlignment="viewEnd"
             android:textAllCaps="true"
-            android:textSize="14sp" />
+            android:textColor="?android:textColorSecondary"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif"
+            tools:text="infoTitle2"
+            />
 
         <TextView
             android:id="@+id/infoValue2"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/infoTitle2"
-            android:layout_alignParentEnd="true"
-            android:alpha=".6"
             android:textAlignment="viewEnd"
-            android:textSize="14sp" />
+            android:textSize="14sp"
+            tools:text="infoValue2"
+            />
 
         <TextView
             android:id="@+id/infoTitle3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/infoValue2"
-            android:layout_alignParentEnd="true"
-            android:layout_marginTop="20dp"
+            android:layout_marginTop="15dp"
             android:textAlignment="viewEnd"
             android:textAllCaps="true"
-            android:textSize="14sp" />
+            android:textColor="?android:textColorSecondary"
+            android:textSize="14sp"
+            android:fontFamily="sans-serif"
+            tools:text="infoTitle3"
+            />
 
         <TextView
             android:id="@+id/infoValue3"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@id/infoTitle3"
-            android:layout_alignParentEnd="true"
-            android:alpha=".6"
             android:textAlignment="viewEnd"
-            android:textSize="14sp" />
-    </RelativeLayout>
+            android:textSize="14sp"
+            tools:text="infoValue3"
+            />
+    </LinearLayout>
 
-    <RelativeLayout
+    <org.jellyfin.androidtv.ui.LinearLayoutAbs
         android:id="@+id/middleFrame"
-        android:layout_width="480dp"
-        android:layout_height="420dp"
-        android:layout_alignParentTop="true"
-        android:layout_toEndOf="@+id/leftFrame">
+        android:layout_weight="100"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        app:dividerSize="4dp"
+        tools:ignore="RtlSymmetry"
+        >
 
-        <TextView
+        <org.jellyfin.androidtv.ui.TextViewAbs
             android:id="@+id/fdTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_above="@id/fdMainInfoRow"
-            android:layout_alignParentStart="true"
-            android:layout_marginStart="40sp"
-            android:ellipsize="end"
-            android:fontFamily="sans-serif-light"
-            android:gravity="bottom"
-            android:maxLines="2"
-            android:text="Main Title"
-            android:textSize="32sp" />
-
-        <LinearLayout
-            android:id="@+id/fdMainInfoRow"
+            app:heightPct="@fraction/title_layout_height_pct"
+            android:layout_height="0dp"
             android:layout_width="match_parent"
-            android:layout_height="20sp"
-            android:layout_above="@+id/fdGenreRow"
-            android:layout_alignStart="@+id/fdTitle"
-            android:dividerPadding="4sp"
-            android:orientation="horizontal" />
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            app:autoSizeTextType="uniform"
+            app:autoSizeMinTextSize="18sp"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:fontFamily="sans-serif-light"
+            tools:text="Main Title xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            />
 
-        <TextView
+        <org.jellyfin.androidtv.ui.InfoRowView
+            android:id="@+id/fdMainInfoRow"
+            app:heightPct="@fraction/info_row_layout_height_pct"
+            android:layout_height="0dp"
+            android:layout_width="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            app:dividerSize="4dp"
+            tools:background="@color/red"
+            />
+
+        <org.jellyfin.androidtv.ui.TextViewAbs
             android:id="@+id/fdGenreRow"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_above="@+id/fdSummaryText"
-            android:layout_alignStart="@+id/fdMainInfoRow"
-            android:minHeight="22sp" />
+            app:heightPct="@fraction/info_row_layout_height_pct"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            app:autoSizeTextType="uniform"
+            app:autoSizeMinTextSize="11sp"
+            android:ellipsize="end"
+            android:includeFontPadding="false"
+            android:textColor="?android:textColorSecondary"
+            tools:text="Action / Adventure / Horror / Mystery /xxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+            />
 
         <org.jellyfin.androidtv.ui.ExpandableTextView
             android:id="@+id/fdSummaryText"
+            android:layout_weight="1"
+            android:layout_height="0dp"
             android:layout_width="match_parent"
-            android:layout_height="135dp"
-            android:layout_above="@id/fdButtonRow"
-            android:layout_alignStart="@id/fdTitle"
-            android:layout_marginTop="15dp"
-            android:layout_marginBottom="10dp"
+            android:maxLines="7"
+            app:autoSizeTextType="uniform"
+            app:autoSizeMaxTextSize="17sp"
+            app:autoSizeMinTextSize="12sp"
             android:ellipsize="end"
+            android:includeFontPadding="false"
             android:fontFamily="sans-serif-light"
-            android:maxLines="6"
-            android:textSize="16sp"
-            android:transitionName="summary" />
-
-        <LinearLayout
-            android:id="@+id/fdButtonRow"
-            android:layout_width="fill_parent"
-            android:layout_height="70dp"
-            android:layout_alignStart="@+id/fdTitle"
-            android:layout_alignParentBottom="true"
-            android:layout_marginBottom="20dp"
-            android:divider="@drawable/blank10x10"
-            android:gravity="start"
-            android:orientation="horizontal"
-            android:showDividers="none"
-
+            android:textColor="?android:attr/textColorSecondary"
+            android:transitionName="summary"
+            tools:text="@string/longDummyText30x8"
             />
-    </RelativeLayout>
 
-    <RelativeLayout
-        android:layout_width="match_parent"
-        android:layout_height="420dp"
-        android:layout_alignParentTop="true"
-        android:layout_toEndOf="@+id/middleFrame">
+        <org.jellyfin.androidtv.ui.LinearLayoutAbs
+            android:id="@+id/fdButtonRow"
+            app:heightPct="@fraction/button_bar_layout_height_pct"
+            android:layout_height="0dp"
+            android:layout_width="match_parent"
+            android:orientation="horizontal"
+            app:dividerSize="5dp"
+            android:layout_marginTop="6dp"
+            tools:background="@color/red"
+            />
+    </org.jellyfin.androidtv.ui.LinearLayoutAbs>
 
-        <org.jellyfin.androidtv.ui.AsyncImageView
-            android:id="@+id/mainImage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerInParent="true"
-            android:layout_centerVertical="true"
-            android:layout_marginTop="60dp"
-            android:contentDescription="@null"
-            android:foregroundGravity="fill_horizontal"
-            android:paddingStart="50dp"
-            android:paddingTop="80dp"
-            android:paddingEnd="50dp"
-            android:paddingBottom="30dp"
-            android:scaleType="centerInside"
-            app:srcCompat="@drawable/blank30x30" />
+    <org.jellyfin.androidtv.ui.AsyncImageView
+        android:id="@+id/mainImage"
+        android:layout_weight="50"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:adjustViewBounds="true"
+        app:srcCompat="@drawable/blank30x30"
+        tools:src="@drawable/app_logo" />
 
-        <ProgressBar
-            android:id="@+id/fdProgress"
-            style="@style/overlay_progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignStart="@+id/mainImage"
-            android:layout_alignEnd="@+id/mainImage"
-            android:layout_alignBottom="@+id/mainImage"
-            android:layout_marginBottom="5dp"
-            android:max="100"
-            android:maxHeight="5sp"
-            android:paddingStart="55dp"
-            android:paddingEnd="55dp"
-            android:paddingBottom="30dp"
-            android:visibility="gone" />
+</org.jellyfin.androidtv.ui.LinearLayoutAbs>
 
-    </RelativeLayout>
-</RelativeLayout>
