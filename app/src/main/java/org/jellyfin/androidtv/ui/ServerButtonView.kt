@@ -4,9 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.LayoutInflater
-import android.view.ViewGroup
 import android.widget.FrameLayout
-import androidx.core.content.res.ResourcesCompat
 import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import org.jellyfin.androidtv.R
@@ -26,8 +24,6 @@ class ServerButtonView @JvmOverloads constructor(
 	init {
 		isFocusable = true
 		isClickable = true
-		descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
-		foreground = ResourcesCompat.getDrawable(resources, R.drawable.ripple, context.theme)
 	}
 
 	var name: String
