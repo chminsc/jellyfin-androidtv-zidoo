@@ -19,17 +19,16 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.add
 import androidx.window.layout.WindowMetricsCalculator
 import com.bumptech.glide.Glide
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import com.bumptech.glide.Priority
+import kotlinx.coroutines.*
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.auth.model.Server
+import org.jellyfin.androidtv.constant.BackgroundType
 import org.jellyfin.androidtv.preference.UserPreferences
+import org.jellyfin.androidtv.util.ImageHelper
+import org.jellyfin.androidtv.util.ImageHelper.Companion.DEFAULT_BACKDROP_IMAGE_QUALITY
+import org.jellyfin.androidtv.util.ImageHelper.Companion.DEFAULT_IMAGE_QUALITY
+import org.jellyfin.androidtv.util.ImageUtils.*
 import org.jellyfin.androidtv.util.sdk.compat.asSdk
 import org.jellyfin.sdk.Jellyfin
 import org.jellyfin.sdk.api.client.ApiClient
@@ -39,7 +38,7 @@ import org.jellyfin.sdk.model.api.ImageType
 import org.jellyfin.sdk.model.api.SearchHint
 import org.jellyfin.sdk.model.serializer.toUUID
 import timber.log.Timber
-import java.util.UUID
+import java.util.*
 import java.util.concurrent.ExecutionException
 import org.jellyfin.apiclient.model.dto.BaseItemDto as LegacyBaseItemDto
 
@@ -48,9 +47,10 @@ class BackgroundService(
 	private val jellyfin: Jellyfin,
 	private val api: ApiClient,
 	private val userPreferences: UserPreferences,
+	private val imageHelper: ImageHelper,
 ) {
 	companion object {
-		const val TRANSITION_DURATION = 400L // 0.4 seconds
+		const val TRANSITION_DURATION = 300L // 0.3 seconds
 		const val SLIDESHOW_DURATION = 30000L // 30 seconds
 		const val UPDATE_INTERVAL = 500L // 0.5 seconds
 		val FRAGMENT_TAG = BackgroundServiceFragment::class.qualifiedName!!
@@ -104,7 +104,7 @@ class BackgroundService(
 	}
 
 	/**
-	 * Attach the bakground to [activity].
+	 * Attach the background to [activity].
 	 */
 	fun attach(activity: FragmentActivity) {
 		// Set default background to current if it's not layered
@@ -135,12 +135,21 @@ class BackgroundService(
 		// Check for nullability
 		if (itemId == null || isNullOrEmpty()) return emptyList()
 
+		val (maxH, maxQ) = when(userPreferences[UserPreferences.backdropType]) {
+			BackgroundType.NONE -> Pair(windowSize.height, DEFAULT_BACKDROP_IMAGE_QUALITY)
+			BackgroundType.NORMAL -> Pair(windowSize.height, DEFAULT_BACKDROP_IMAGE_QUALITY)
+			BackgroundType.HIGH -> Pair(windowSize.height, DEFAULT_IMAGE_QUALITY)
+			BackgroundType.LOW -> Pair(windowSize.height / 2, DEFAULT_IMAGE_QUALITY)
+		}
+
 		return mapIndexed { index, tag ->
 			api.imageApi.getItemImageUrl(
 				itemId = itemId,
 				imageType = ImageType.BACKDROP,
 				tag = tag,
 				imageIndex = index,
+				maxHeight = maxH,
+				quality = maxQ
 			)
 		}
 	}
@@ -157,9 +166,9 @@ class BackgroundService(
 	/**
 	 * Use all available backdrops from [baseItem] as background.
 	 */
-	fun setBackground(baseItem: BaseItemDto?) {
+	fun setBackground(baseItem: BaseItemDto?, ignoreSettings: Boolean = false) {
 		// Check if item is set and backgrounds are enabled
-		if (baseItem == null || !userPreferences[UserPreferences.backdropEnabled])
+		if (baseItem == null || (!ignoreSettings && userPreferences[UserPreferences.backdropType] == BackgroundType.NONE))
 			return clearBackgrounds()
 
 		// Get all backdrop urls
@@ -170,13 +179,35 @@ class BackgroundService(
 		loadBackgrounds(backdropUrls)
 	}
 
+	fun preLoadBackgrounds(baseItems: Iterable<BaseItemDto>) {
+		if (userPreferences[UserPreferences.backdropType] == BackgroundType.NONE)
+			return
+		val backdropUrls: Set<String> = buildSet {
+			baseItems.forEach {
+				val itemBackdropUrls = it.backdropImageTags.getUrls(it.id)
+				val parentBackdropUrls = it.parentBackdropImageTags.getUrls(it.parentBackdropItemId)
+				this.addAll(itemBackdropUrls.union(parentBackdropUrls))
+			}
+		}
+
+		if (backdropUrls.isNotEmpty())
+			imageHelper.preCacheImages(context, backdropUrls, windowSize.height, windowSize.width)
+	}
+
 	/**
 	 * Use backdrop from [searchHint] as background.
 	 */
 	fun setBackground(searchHint: SearchHint) {
 		// Check if item is set and backgrounds are enabled
-		if (!userPreferences[UserPreferences.backdropEnabled])
+		if (userPreferences[UserPreferences.backdropType] == BackgroundType.NONE)
 			return clearBackgrounds()
+
+		val (maxH, maxQ) = when(userPreferences[UserPreferences.backdropType]) {
+			BackgroundType.NONE -> Pair(windowSize.height, DEFAULT_BACKDROP_IMAGE_QUALITY)
+			BackgroundType.NORMAL -> Pair(windowSize.height, DEFAULT_BACKDROP_IMAGE_QUALITY)
+			BackgroundType.HIGH -> Pair(windowSize.height, DEFAULT_IMAGE_QUALITY)
+			BackgroundType.LOW -> Pair(windowSize.height / 2, DEFAULT_IMAGE_QUALITY)
+		}
 
 		// Manually grab the backdrop URL
 		val backdropUrls = setOfNotNull(searchHint.backdropImageItemId?.let { itemId ->
@@ -184,6 +215,8 @@ class BackgroundService(
 				itemId = itemId.toUUID(),
 				imageType = ImageType.BACKDROP,
 				tag = searchHint.backdropImageTag,
+				maxHeight = maxH,
+				quality = maxQ
 			)
 		})
 
@@ -195,7 +228,7 @@ class BackgroundService(
 	 */
 	fun setBackground(server: Server) {
 		// Check if item is set and backgrounds are enabled
-		if (!userPreferences[UserPreferences.backdropEnabled])
+		if (userPreferences[UserPreferences.backdropType] == BackgroundType.NONE)
 			return clearBackgrounds()
 
 		// Check if splashscreen is enabled in (cached) branding options
@@ -219,6 +252,7 @@ class BackgroundService(
 					Glide.with(context)
 						.load(url)
 						.override(windowSize.width, windowSize.height)
+						.priority(Priority.LOW)
 						.centerCrop()
 						.submit()
 				}
