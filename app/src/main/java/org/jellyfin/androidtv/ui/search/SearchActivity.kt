@@ -4,10 +4,10 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.speech.SpeechRecognizer
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
 
-class SearchActivity : FragmentActivity() {
+class SearchActivity : AppCompatActivity() {
 	private val isSpeechEnabled by lazy {
 		SpeechRecognizer.isRecognitionAvailable(this)
 			&& ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_DENIED
