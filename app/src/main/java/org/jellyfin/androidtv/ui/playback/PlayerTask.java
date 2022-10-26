@@ -1,28 +1,22 @@
 package org.jellyfin.androidtv.ui.playback;
 
-import static org.jellyfin.androidtv.ui.AudioSubtitleHelper.getBestAudioSubtitleIdx;
 import static org.jellyfin.androidtv.ui.playback.PlayerApiHelpers.API_ZIDOO_HTTP_API_VIDEOPLAY_STATUS_ERROR;
 import static org.jellyfin.androidtv.ui.playback.PlayerApiHelpers.API_ZIDOO_HTTP_API_VIDEOPLAY_STATUS_PAUSE;
 import static org.jellyfin.androidtv.ui.playback.PlayerApiHelpers.API_ZIDOO_HTTP_API_VIDEOPLAY_STATUS_PLAYING;
 import static org.jellyfin.androidtv.ui.playback.PlayerApiHelpers.SUBTITLE_DISABLED;
 import static org.jellyfin.androidtv.ui.playback.PlayerApiHelpers.getFromTmdbHttp_API;
-import static org.jellyfin.androidtv.ui.playback.PlayerApiHelpers.getNfsRoot;
-import static org.jellyfin.androidtv.ui.playback.PlayerApiHelpers.getSmbUserPass;
 import static org.jellyfin.androidtv.ui.playback.PlayerApiHelpers.getZidooPlayStatusEx;
 import static org.jellyfin.androidtv.ui.playback.PlayerApiHelpers.setZidooAudioTrack;
 import static org.jellyfin.androidtv.ui.playback.PlayerApiHelpers.setZidooSeekPosition;
 import static org.jellyfin.androidtv.ui.playback.PlayerApiHelpers.setZidooSubtitleTrack;
+import static org.jellyfin.androidtv.util.AudioSubtitleHelper.getBestAudioSubtitleIdx;
 import static org.jellyfin.androidtv.util.Utils.RUNTIME_TICKS_TO_MS;
 import static org.jellyfin.androidtv.util.Utils.getMillisecondsFormated;
-import static org.jellyfin.androidtv.util.Utils.getSafeValue;
-import static org.jellyfin.androidtv.util.Utils.isEmptyTrim;
-import static org.jellyfin.androidtv.util.Utils.isNonEmpty;
 import static org.jellyfin.androidtv.util.Utils.isNonEmptyTrim;
 import static org.koin.java.KoinJavaComponent.inject;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Handler;
 import android.os.HandlerThread;
 
@@ -33,13 +27,12 @@ import androidx.core.util.Pair;
 import org.jellyfin.androidtv.auth.repository.UserRepository;
 import org.jellyfin.androidtv.data.compat.StreamInfo;
 import org.jellyfin.androidtv.preference.constant.LanguagesAudio;
-import org.jellyfin.androidtv.ui.AudioSubtitleHelper;
+import org.jellyfin.androidtv.util.AudioSubtitleHelper;
 import org.jellyfin.androidtv.util.apiclient.ReportingHelper;
 import org.jellyfin.apiclient.interaction.ApiClient;
 import org.jellyfin.apiclient.interaction.Response;
 import org.jellyfin.apiclient.model.dto.BaseItemDto;
 import org.jellyfin.apiclient.model.dto.BaseItemType;
-import org.jellyfin.apiclient.model.dto.MediaSourceInfo;
 import org.jellyfin.apiclient.model.entities.MediaStream;
 import org.jellyfin.apiclient.model.session.PlayMethod;
 import org.json.JSONArray;
@@ -49,8 +42,6 @@ import org.koin.java.KoinJavaComponent;
 
 import java.util.Map;
 
-import jcifs.Address;
-import jcifs.CIFSException;
 import kotlin.Lazy;
 import timber.log.Timber;
 
@@ -109,106 +100,106 @@ abstract class PlayerTask implements Runnable {
     }
 }
 
-class MountTask extends PlayerTask {
-    final Response<String> mCallback;
-    final String mInputPath;
-    String mShareName;
-    String mServerHostName;
-    String mUserName;
-    String mPassword;
-    String mMountPath;
-    String mRelativePath;
-    boolean isNfs;
-
-    public MountTask(@NonNull final Activity activity, @NonNull Uri pathUri, @NonNull final Response<String> callback) {
-        super(activity);
-        mCallback = callback;
-        mMountPath = null;
-        mShareName = null;
-        mServerHostName = null;
-        mUserName = null;
-        mPassword = null;
-        mRelativePath = null;
-
-        mInputPath = pathUri.getPath();
-        if (isNonEmptyTrim(pathUri.getHost())) {
-            mServerHostName = pathUri.getHost();
-        }
-        Timber.d("MountTask with host <%s> path <%s>", mServerHostName, mInputPath);
-        if ("smb".equals(pathUri.getScheme()) && isNonEmptyTrim(mInputPath)) {
-            if (isNonEmpty(pathUri.getPathSegments())) {
-                mShareName = pathUri.getPathSegments().get(0);
-            }
-            mRelativePath = mInputPath.replaceFirst("/" + mShareName,""); // FIXME needs tobe the first / anchor?
-            Pair<String, String> smbUserPass = getSmbUserPass(pathUri);
-            mUserName = smbUserPass.first;
-            mPassword = smbUserPass.second;
-            Timber.d("MountTask using SMB username <%s>", mUserName);
-            if (mPassword != null) {
-                Timber.d("MountTask using SMB password <*******>");
-            }
-        } else if ("nfs".equals(pathUri.getScheme()) && isNonEmptyTrim(mInputPath)) {
-            isNfs = true;
-            Pair<String, String> nfsRootShare = getNfsRoot(pathUri);
-            mShareName = nfsRootShare.second;
-            mRelativePath = mInputPath.replace("/:", ""); // remove old NFS marker
-            mRelativePath = mRelativePath.replaceFirst("/" + nfsRootShare.second,""); // FIXME needs tobe the first / anchor?
-        }
-        if (mServerHostName == null || mShareName == null) {
-            Timber.e("MountTask invalid HostName/ShareName, ending!");
-            finishTask(false);
-        } else {
-            post(this, 0);
-        }
-    }
-
-    private void handleCallback() {
-        if (isNonEmptyTrim(mMountPath)) {
-            Timber.d("Using mountPath <%s> rPath <%s>", mMountPath, mRelativePath);
-            mCallback.onResponse(mMountPath + mRelativePath);
-        } else {
-            mCallback.onResponse(null);
-        }
-    }
-
-    @Override
-    protected void finishTask(boolean isReset) {
-        if (!mIsFinished) {
-            super.finishTask(isReset);
-            if (!isReset) {
-                mActivity.runOnUiThread(this::handleCallback); // run in Ui thread!
-            }
-        }
-    }
-
-    @Override
-    public void run() {
-        String ip = mServerHostName;
-        try {
-            // NOTE: new API has no hostname support
-            Address addr = jcifs.context.SingletonContext.getInstance().getNameServiceClient().getByName(mServerHostName);
-            ip = addr.getHostAddress();
-        } catch (Exception ignored) {
-        } finally {
-            try {
-                jcifs.context.SingletonContext.getInstance().close();
-            } catch (CIFSException ignored) {
-            }
-        }
-
-        ZEMountManage mZEMountManage = new ZEMountManage(mActivity);
-        if (isNfs) {
-            Timber.i("MountTask NFS using Host-IP <%s> Share <%s>", ip, mShareName);
-            mMountPath = mZEMountManage.mountNfs(mShareName, ip);
-        } else {
-            Timber.i("MountTask SMB using Host-IP <%s> Share <%s> User <%s>", ip, mShareName, mUserName);
-            mMountPath = mZEMountManage.mountSmb(mShareName, ip, mUserName, mPassword);
-        }
-        //callback mount  AbsolutePath
-        //  as: /data/system/smb/192.168.11.106#zidoo
-        finishTask(false);
-    }
-}
+//class MountTask extends PlayerTask {
+//    final Response<String> mCallback;
+//    final String mInputPath;
+//    String mShareName;
+//    String mServerHostName;
+//    String mUserName;
+//    String mPassword;
+//    String mMountPath;
+//    String mRelativePath;
+//    boolean isNfs;
+//
+//    public MountTask(@NonNull final Activity activity, @NonNull Uri pathUri, @NonNull final Response<String> callback) {
+//        super(activity);
+//        mCallback = callback;
+//        mMountPath = null;
+//        mShareName = null;
+//        mServerHostName = null;
+//        mUserName = null;
+//        mPassword = null;
+//        mRelativePath = null;
+//
+//        mInputPath = pathUri.getPath();
+//        if (isNonEmptyTrim(pathUri.getHost())) {
+//            mServerHostName = pathUri.getHost();
+//        }
+//        Timber.d("MountTask with host <%s> path <%s>", mServerHostName, mInputPath);
+//        if ("smb".equals(pathUri.getScheme()) && isNonEmptyTrim(mInputPath)) {
+//            if (isNonEmpty(pathUri.getPathSegments())) {
+//                mShareName = pathUri.getPathSegments().get(0);
+//            }
+//            mRelativePath = mInputPath.replaceFirst("/" + mShareName,""); // FIXME needs tobe the first / anchor?
+//            Pair<String, String> smbUserPass = getSmbUserPass(pathUri);
+//            mUserName = smbUserPass.first;
+//            mPassword = smbUserPass.second;
+//            Timber.d("MountTask using SMB username <%s>", mUserName);
+//            if (mPassword != null) {
+//                Timber.d("MountTask using SMB password <*******>");
+//            }
+//        } else if ("nfs".equals(pathUri.getScheme()) && isNonEmptyTrim(mInputPath)) {
+//            isNfs = true;
+//            Pair<String, String> nfsRootShare = getNfsRoot(pathUri);
+//            mShareName = nfsRootShare.second;
+//            mRelativePath = mInputPath.replace("/:", ""); // remove old NFS marker
+//            mRelativePath = mRelativePath.replaceFirst("/" + nfsRootShare.second,""); // FIXME needs tobe the first / anchor?
+//        }
+//        if (mServerHostName == null || mShareName == null) {
+//            Timber.e("MountTask invalid HostName/ShareName, ending!");
+//            finishTask(false);
+//        } else {
+//            post(this, 0);
+//        }
+//    }
+//
+//    private void handleCallback() {
+//        if (isNonEmptyTrim(mMountPath)) {
+//            Timber.d("Using mountPath <%s> rPath <%s>", mMountPath, mRelativePath);
+//            mCallback.onResponse(mMountPath + mRelativePath);
+//        } else {
+//            mCallback.onResponse(null);
+//        }
+//    }
+//
+//    @Override
+//    protected void finishTask(boolean isReset) {
+//        if (!mIsFinished) {
+//            super.finishTask(isReset);
+//            if (!isReset) {
+//                mActivity.runOnUiThread(this::handleCallback); // run in Ui thread!
+//            }
+//        }
+//    }
+//
+//    @Override
+//    public void run() {
+//        String ip = mServerHostName;
+//        try {
+//            // NOTE: new API has no hostname support
+//            Address addr = jcifs.context.SingletonContext.getInstance().getNameServiceClient().getByName(mServerHostName);
+//            ip = addr.getHostAddress();
+//        } catch (Exception ignored) {
+//        } finally {
+//            try {
+//                jcifs.context.SingletonContext.getInstance().close();
+//            } catch (CIFSException ignored) {
+//            }
+//        }
+//
+//        ZEMountManage mZEMountManage = new ZEMountManage(mActivity);
+//        if (isNfs) {
+//            Timber.i("MountTask NFS using Host-IP <%s> Share <%s>", ip, mShareName);
+//            mMountPath = mZEMountManage.mountNfs(mShareName, ip);
+//        } else {
+//            Timber.i("MountTask SMB using Host-IP <%s> Share <%s> User <%s>", ip, mShareName, mUserName);
+//            mMountPath = mZEMountManage.mountSmb(mShareName, ip, mUserName, mPassword);
+//        }
+//        //callback mount  AbsolutePath
+//        //  as: /data/system/smb/192.168.11.106#zidoo
+//        finishTask(false);
+//    }
+//}
 
 class TmdbTask extends PlayerTask {
     static final long MAX_TMDB_TASK_TIME_MS = 10000;
@@ -325,7 +316,7 @@ abstract class ZidooTask extends PlayerTask {
     static final int API_ZIDOO_STARTUP_RETRY_INTERVAL = 400; // interval between startup detection try's
     static final int API_ZIDOO_HTTP_API_REPORT_LOOP_INTERVAL = 15000; // interval between playback report ticks
     static final int API_ZIDOO_HTTP_API_MAX_ERROR_COUNT = 5; // maximum http errors, before we fail
-    static final int API_ZIDOO_SEEKPOS_DELTA = 8000; // delta in ms when to seek vs current pos
+    static final int API_ZIDOO_SEEKPOS_DELTA = 10000; // delta in ms when to seek vs current pos
 
     final public BaseItemDto mItem;
     final public StreamInfo mStreamInfo;
@@ -381,8 +372,8 @@ abstract class ZidooTask extends PlayerTask {
         return (mPlayStatus >= API_ZIDOO_HTTP_API_VIDEOPLAY_STATUS_PAUSE);
     }
 
-    protected void setSeekPos(@Nullable Integer seekPos) {
-        if (seekPos != null && seekPos > 0 && mPlayPos != null) {
+    protected void setSeekPos(int seekPos) {
+        if (seekPos > 0 && mPlayPos != null) { // TODO handle 0 startPos for old API?
             int delta = Math.abs(mPlayPos - seekPos);
             if (delta > API_ZIDOO_SEEKPOS_DELTA) {
                 if (setZidooSeekPosition(seekPos)) {
