@@ -3,17 +3,14 @@ package org.jellyfin.androidtv.ui.browsing;
 import static org.koin.java.KoinJavaComponent.inject;
 
 import android.os.Bundle;
-import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.TextClock;
 import android.widget.TextView;
 
-import androidx.core.content.ContextCompat;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.leanback.app.BrowseSupportFragment;
 import androidx.leanback.widget.ArrayObjectAdapter;
+import androidx.leanback.widget.ClassPresenterSelector;
 import androidx.leanback.widget.HeaderItem;
 import androidx.leanback.widget.ListRow;
 import androidx.leanback.widget.OnItemViewClickedListener;
@@ -23,19 +20,15 @@ import androidx.leanback.widget.Row;
 import androidx.leanback.widget.RowPresenter;
 
 import org.jellyfin.androidtv.R;
-import org.jellyfin.androidtv.constant.QueryType;
 import org.jellyfin.androidtv.data.model.DataRefreshService;
-import org.jellyfin.androidtv.data.querying.ViewQuery;
 import org.jellyfin.androidtv.data.service.BackgroundService;
 import org.jellyfin.androidtv.preference.UserPreferences;
-import org.jellyfin.androidtv.preference.constant.ClockBehavior;
-import org.jellyfin.androidtv.ui.ClockUserView;
 import org.jellyfin.androidtv.ui.itemhandling.BaseRowItem;
 import org.jellyfin.androidtv.ui.itemhandling.ItemLauncher;
 import org.jellyfin.androidtv.ui.itemhandling.ItemRowAdapter;
 import org.jellyfin.androidtv.ui.presentation.CardPresenter;
-import org.jellyfin.androidtv.ui.presentation.PositionableListRowPresenter;
-import org.jellyfin.androidtv.util.Utils;
+import org.jellyfin.androidtv.util.LayoutHelper;
+import org.jellyfin.androidtv.util.TextViewExtensionKt;
 import org.jellyfin.apiclient.interaction.EmptyResponse;
 import org.jellyfin.apiclient.model.dto.BaseItemType;
 import org.koin.java.KoinJavaComponent;
@@ -48,7 +41,6 @@ import timber.log.Timber;
 
 public class StdBrowseFragment extends BrowseSupportFragment implements RowLoader {
     protected String MainTitle;
-    protected boolean ShowBadge = true;
     protected BaseRowItem mCurrentItem;
     protected ListRow mCurrentRow;
     protected CompositeClickedListener mClickedListener = new CompositeClickedListener();
@@ -56,11 +48,11 @@ public class StdBrowseFragment extends BrowseSupportFragment implements RowLoade
     protected ArrayObjectAdapter mRowsAdapter;
     protected ArrayList<BrowseRowDef> mRows = new ArrayList<>();
     protected CardPresenter mCardPresenter;
-    private TextClock mClock;
 
     protected boolean justLoaded = true;
 
     private Lazy<BackgroundService> backgroundService = inject(BackgroundService.class);
+    private Lazy<UserPreferences> userPreferences = inject(UserPreferences.class);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -83,13 +75,6 @@ public class StdBrowseFragment extends BrowseSupportFragment implements RowLoade
     public void onResume() {
         super.onResume();
 
-        ClockBehavior showClock = KoinJavaComponent.<UserPreferences>get(UserPreferences.class).get(UserPreferences.Companion.getClockBehavior());
-
-        if (showClock == ClockBehavior.ALWAYS || showClock == ClockBehavior.IN_MENUS)
-            mClock.setVisibility(View.VISIBLE);
-        else
-            mClock.setVisibility(View.GONE);
-
         //React to deletion
         DataRefreshService dataRefreshService = KoinJavaComponent.<DataRefreshService>get(DataRefreshService.class);
         if (getActivity() != null && !getActivity().isFinishing() && mCurrentRow != null && mCurrentItem != null && mCurrentItem.getItemId() != null && mCurrentItem.getItemId().equals(dataRefreshService.getLastDeletedItemId())) {
@@ -109,7 +94,8 @@ public class StdBrowseFragment extends BrowseSupportFragment implements RowLoade
     }
 
     public void loadRows(List<BrowseRowDef> rows) {
-        mRowsAdapter = new ArrayObjectAdapter(new PositionableListRowPresenter());
+        ClassPresenterSelector rowPS = LayoutHelper.INSTANCE.buildDefaultRowPresenterSelector(null, 0);
+        mRowsAdapter = new ArrayObjectAdapter(rowPS);
         mCardPresenter = new CardPresenter();
 
         for (BrowseRowDef def : rows) {
@@ -133,42 +119,22 @@ public class StdBrowseFragment extends BrowseSupportFragment implements RowLoade
     }
 
     protected void setupUIElements() {
-        if (ShowBadge)
-            setBadgeDrawable(ContextCompat.getDrawable(requireContext(), R.drawable.app_logo));
-
-        setTitle(MainTitle); // Badge, when set, takes precedent over title
+        setTitle(MainTitle);
+        setBadgeDrawable(null);
         setHeadersState(HEADERS_DISABLED);
     }
 
     @Override
-    public void onStart() {
-        super.onStart();
-
-        // move the badge/title to the left to make way for our clock/user bug
-        ImageView badge = (ImageView) getActivity().findViewById(R.id.title_badge);
-        TextView title = (TextView) getActivity().findViewById(R.id.title_text);
-        if (badge != null) {
-            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) badge.getLayoutParams();
-            lp.rightMargin = Utils.convertDpToPixel(getActivity(), 120);
-            badge.setLayoutParams(lp);
-        }
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        var title = (TextView) view.findViewById(R.id.title_text);
         if (title != null) {
-            FrameLayout.LayoutParams lp = (FrameLayout.LayoutParams) title.getLayoutParams();
-            lp.rightMargin = Utils.convertDpToPixel(getActivity(), 120);
-            title.setLayoutParams(lp);
+            TextViewExtensionKt.setDefaultShadow(title);
         }
 
-        ViewGroup root = (ViewGroup) getActivity().findViewById(android.R.id.content);
+        if (getRowsSupportFragment() != null)
+            getRowsSupportFragment().setAlignment(LayoutHelper.INSTANCE.getDefaultRowHeights().getSecond()); // TODO is not working?
 
-        // and add the clock element
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        ClockUserView userClock = new ClockUserView(getActivity(), null);
-        mClock = userClock.findViewById(R.id.clock);
-        layoutParams.gravity = Gravity.TOP | Gravity.RIGHT;
-        layoutParams.rightMargin = Utils.convertDpToPixel(getActivity(), 40);
-        layoutParams.topMargin = Utils.convertDpToPixel(getActivity(), 20);
-        userClock.setLayoutParams(layoutParams);
-        root.addView(userClock);
+        super.onViewCreated(view, savedInstanceState);
     }
 
     protected void setupEventListeners() {
