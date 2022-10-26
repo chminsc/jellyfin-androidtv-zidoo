@@ -1,92 +1,37 @@
 package org.jellyfin.androidtv.ui.home
 
 import android.content.Intent
-import android.graphics.PorterDuff
-import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.target.CustomViewTarget
-import com.bumptech.glide.request.transition.Transition
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.auth.repository.SessionRepository
-import org.jellyfin.androidtv.auth.repository.UserRepository
-import org.jellyfin.androidtv.databinding.FragmentToolbarHomeBinding
+import org.jellyfin.androidtv.ui.ToolbarView
 import org.jellyfin.androidtv.ui.preference.PreferencesActivity
 import org.jellyfin.androidtv.ui.search.SearchActivity
 import org.jellyfin.androidtv.ui.startup.StartupActivity
-import org.jellyfin.androidtv.util.ImageUtils
 import org.koin.android.ext.android.inject
 
 class HomeToolbarFragment : Fragment() {
-	private lateinit var binding: FragmentToolbarHomeBinding
 	private val sessionRepository by inject<SessionRepository>()
-	private val userRepository by inject<UserRepository>()
 
-	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-		binding = FragmentToolbarHomeBinding.inflate(inflater, container, false)
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+		return ToolbarView(requireContext()).apply {
 
-		binding.settings.setOnClickListener {
-			val settingsIntent = Intent(activity, PreferencesActivity::class.java)
-			activity?.startActivity(settingsIntent)
-		}
-
-		binding.switchUsers.setOnClickListener {
-			switchUser()
-		}
-
-		binding.search.setOnClickListener {
-			val settingsIntent = Intent(activity, SearchActivity::class.java)
-			activity?.startActivity(settingsIntent)
-		}
-
-		return binding.root
-	}
-
-	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-		super.onViewCreated(view, savedInstanceState)
-
-		viewLifecycleOwner.lifecycleScope.launchWhenCreated {
-			viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-				userRepository.currentUser.collect { user ->
-					if (user != null) {
-						val image = ImageUtils.getPrimaryImageUrl(user)
-						setUserImage(image)
-					}
-				}
+			addButton(R.drawable.ic_search, R.string.lbl_search) {
+				val intent = Intent(activity, SearchActivity::class.java)
+				activity?.startActivity(intent)
 			}
-		}
-	}
 
-	private fun setUserImage(image: String?) {
-		Glide.with(requireContext())
-			.load(image)
-			.placeholder(R.drawable.ic_switch_users)
-			.centerInside()
-			.circleCrop()
-			.into(object : CustomViewTarget<ImageButton, Drawable>(binding.switchUsers) {
-				override fun onLoadFailed(errorDrawable: Drawable?) {
-					binding.switchUsers.imageTintMode = PorterDuff.Mode.SRC_IN
-					binding.switchUsers.setImageDrawable(errorDrawable)
-				}
+			addButton(R.drawable.ic_settings, R.string.lbl_settings) {
+				val intent = Intent(activity, PreferencesActivity::class.java)
+				activity?.startActivity(intent)
+			}
 
-				override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
-					binding.switchUsers.imageTintMode = null
-					binding.switchUsers.setImageDrawable(resource)
-				}
-
-				override fun onResourceCleared(placeholder: Drawable?) {
-					binding.switchUsers.imageTintMode = PorterDuff.Mode.SRC_IN
-					binding.switchUsers.setImageDrawable(placeholder)
-				}
-			})
+			addButton(R.drawable.ic_switch_users, R.string.lbl_switch_user) { switchUser() }
+		}.rootView
 	}
 
 	private fun switchUser() {
