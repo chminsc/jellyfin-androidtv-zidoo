@@ -4,9 +4,9 @@ package org.jellyfin.androidtv.util.apiclient
 
 import android.content.Context
 import android.text.format.DateFormat
+import me.carleslc.kotlin.extensions.strings.isNotNullOrBlank
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.data.model.ChapterItemInfo
-import org.jellyfin.androidtv.preference.UserPreferences
 import org.jellyfin.androidtv.ui.livetv.TvManager
 import org.jellyfin.androidtv.util.TimeUtils
 import org.jellyfin.androidtv.util.sdk.compat.asSdk
@@ -20,9 +20,9 @@ import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.extensions.imageApi
 import org.jellyfin.sdk.model.api.ImageType
 import org.jellyfin.sdk.model.serializer.toUUID
-import org.koin.java.KoinJavaComponent.get
 import org.koin.java.KoinJavaComponent.inject
-import java.util.Calendar
+import java.text.SimpleDateFormat
+import java.util.*
 
 // TODO Feature Envy!!! Wants to live in BaseItemDto.
 fun BaseItemDto.isLiveTv() =
@@ -36,30 +36,52 @@ fun BaseItemDto?.canPlay() = this != null
 	&& baseItemType != BaseItemType.SeriesTimer
 	&& (!isFolderItem || childCount == null || childCount > 0)
 
+
+fun BaseItemDto.getCardTitleDisplayShort(context: Context): String? = when (baseItemType) {
+	BaseItemType.Episode -> seriesName
+	else -> name
+}
+
+fun BaseItemDto.getCardContentDisplay(context: Context): String? = when (baseItemType) {
+	BaseItemType.Episode -> when {
+		locationType == LocationType.Virtual && name != null && premiereDate != null ->
+			context.getString(
+				R.string.lbl_name_date,
+				name,
+				TimeUtils.getFriendlyDate(context, TimeUtils.convertToLocalDate(premiereDate))
+			)
+		else -> getDisplayName(context)
+	}
+	BaseItemType.Audio,	BaseItemType.MusicAlbum -> albumArtist
+	else -> getSubName(context)
+}
+
 fun BaseItemDto.getFullName(context: Context): String? = when (baseItemType) {
 	BaseItemType.Episode -> buildList {
-		add(seriesName)
-
 		if (parentIndexNumber == 0) {
 			add(context.getString(R.string.episode_name_special))
 		} else {
-			if (parentIndexNumber != null)
-				add(context.getString(R.string.lbl_season_number, parentIndexNumber))
+			buildList {
+				if (parentIndexNumber != null)
+					add(context.getString(R.string.lbl_season_number, parentIndexNumber))
 
-			if (indexNumber != null && indexNumberEnd != null)
-				add(context.getString(R.string.lbl_episode_range, indexNumber, indexNumberEnd))
-			else if (indexNumber != null)
-				add(context.getString(R.string.lbl_episode_number, indexNumber))
-
+				if (indexNumber != null && indexNumberEnd != null)
+					add(context.getString(R.string.lbl_episode_range, indexNumber, indexNumberEnd))
+				else if (indexNumber != null)
+					add(context.getString(R.string.lbl_episode_number, indexNumber))
+			}.joinToString(":").also { add(it) }
 		}
-	}.filterNot { it.isNullOrBlank() }.joinToString(" ")
+		add(seriesName)
+		add(name)
+	}.filter { it.isNotNullOrBlank() }.joinToString(" - ")
 	// we actually want the artist name if available
-	BaseItemType.Audio,
-	BaseItemType.MusicAlbum -> listOfNotNull(albumArtist, name)
-		.filter { it.isNotEmpty() }
+	BaseItemType.Audio,	BaseItemType.MusicAlbum -> listOfNotNull(albumArtist, name)
+		.filter { it.isNotBlank() }
 		.joinToString(" - ")
+
 	else -> name
 }
+
 
 fun BaseItemDto.getDisplayName(context: Context): String = asSdk().getDisplayName(context)
 
@@ -78,6 +100,14 @@ fun BaseItemDto.getSubName(context: Context): String? = when (baseItemType) {
 			childCount > 1 -> context.getString(R.string.lbl_num_episodes, childCount)
 			else -> context.getString(R.string.lbl_one_episode)
 		}
+		else -> when {
+			premiereDate != null -> SimpleDateFormat("yyyy", Locale.getDefault()).format(TimeUtils.convertToLocalDate(premiereDate))
+			else -> ""
+		}
+	}
+	BaseItemType.Series -> when {
+		startDate != null -> TimeUtils.getFriendlyYearRange(context, startDate, endDate)
+		premiereDate != null -> TimeUtils.getFriendlyYearRange(context, premiereDate, endDate)
 		else -> ""
 	}
 	BaseItemType.MusicAlbum -> when {
@@ -89,8 +119,8 @@ fun BaseItemDto.getSubName(context: Context): String? = when (baseItemType) {
 	}
 	BaseItemType.Audio -> name
 	else -> when {
-		get<UserPreferences>(UserPreferences::class.java)[UserPreferences.hideParentalRatings] -> ""
-		else -> officialRating
+		premiereDate != null -> SimpleDateFormat("yyyy", Locale.getDefault()).format(TimeUtils.convertToLocalDate(premiereDate))
+		else -> ""
 	}
 }
 
