@@ -1,12 +1,7 @@
 package org.jellyfin.androidtv.ui.home
 
 import android.content.Context
-import androidx.leanback.widget.ArrayObjectAdapter
-import androidx.leanback.widget.ListRow
-import androidx.leanback.widget.OnItemViewClickedListener
-import androidx.leanback.widget.Presenter
-import androidx.leanback.widget.Row
-import androidx.leanback.widget.RowPresenter
+import androidx.leanback.widget.*
 import androidx.lifecycle.LifecycleCoroutineScope
 import kotlinx.coroutines.launch
 import org.jellyfin.androidtv.data.model.AppNotification
@@ -14,13 +9,14 @@ import org.jellyfin.androidtv.data.repository.NotificationsRepository
 import org.jellyfin.androidtv.ui.notification.AppNotificationPresenter
 import org.jellyfin.androidtv.ui.presentation.CardPresenter
 import org.jellyfin.androidtv.ui.presentation.MutableObjectAdapter
+import org.jellyfin.androidtv.util.SmallListRow
 
 class NotificationsHomeFragmentRow(
 	lifecycleScope: LifecycleCoroutineScope,
 	private val notificationsRepository: NotificationsRepository,
 ) : HomeFragmentRow, OnItemViewClickedListener {
 	private val announcementAdapter by lazy { MutableObjectAdapter<AppNotification>(AppNotificationPresenter()) }
-	private val listRow by lazy { ListRow(null, announcementAdapter) }
+	private val listRow by lazy { SmallListRow(null, announcementAdapter) }
 	private var rowsAdapter: ArrayObjectAdapter? = null
 	private var rowAdded = false
 
@@ -47,7 +43,7 @@ class NotificationsHomeFragmentRow(
 		}
 	}
 
-	override fun addToRowsAdapter(context: Context, cardPresenter: CardPresenter, rowsAdapter: ArrayObjectAdapter) {
+	override fun addToRowsAdapter(context: Context, presenter: CardPresenter, rowsAdapter: ArrayObjectAdapter) {
 		this.rowsAdapter = rowsAdapter
 		update(notificationsRepository.notifications.value.isEmpty())
 	}
