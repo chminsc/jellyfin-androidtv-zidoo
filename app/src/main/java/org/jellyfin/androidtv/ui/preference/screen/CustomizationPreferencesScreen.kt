@@ -1,17 +1,13 @@
 package org.jellyfin.androidtv.ui.preference.screen
 
 import org.jellyfin.androidtv.R
+import org.jellyfin.androidtv.constant.*
 import org.jellyfin.androidtv.preference.UserPreferences
 import org.jellyfin.androidtv.preference.constant.AppTheme
 import org.jellyfin.androidtv.preference.constant.ClockBehavior
 import org.jellyfin.androidtv.preference.constant.RatingType
 import org.jellyfin.androidtv.preference.constant.WatchedIndicatorBehavior
-import org.jellyfin.androidtv.ui.preference.dsl.OptionsFragment
-import org.jellyfin.androidtv.ui.preference.dsl.checkbox
-import org.jellyfin.androidtv.ui.preference.dsl.enum
-import org.jellyfin.androidtv.ui.preference.dsl.link
-import org.jellyfin.androidtv.ui.preference.dsl.optionsScreen
-import org.jellyfin.androidtv.ui.preference.dsl.shortcut
+import org.jellyfin.androidtv.ui.preference.dsl.*
 import org.koin.android.ext.android.inject
 
 class CustomizationPreferencesScreen : OptionsFragment() {
@@ -33,30 +29,9 @@ class CustomizationPreferencesScreen : OptionsFragment() {
 				bind(userPreferences, UserPreferences.clockBehavior)
 			}
 
-			enum<WatchedIndicatorBehavior> {
-				setTitle(R.string.pref_watched_indicator)
-				bind(userPreferences, UserPreferences.watchedIndicatorBehavior)
-			}
-
-			checkbox {
+			enum<BackgroundType> {
 				setTitle(R.string.lbl_show_backdrop)
-				setContent(R.string.pref_show_backdrop_description)
-				bind(userPreferences, UserPreferences.backdropEnabled)
-			}
-
-			enum<RatingType> {
-				setTitle(R.string.pref_default_rating)
-				bind(userPreferences, UserPreferences.defaultRatingType)
-			}
-
-			checkbox {
-				setTitle(R.string.pref_hide_card_ratings)
-				bind(userPreferences, UserPreferences.hideCardRatings)
-			}
-
-			checkbox {
-				setTitle(R.string.pref_hide_parental_ratings)
-				bind(userPreferences, UserPreferences.hideParentalRatings)
+				bind(userPreferences, UserPreferences.backdropType)
 			}
 
 			checkbox {
@@ -66,8 +41,8 @@ class CustomizationPreferencesScreen : OptionsFragment() {
 			}
 
 			checkbox {
-				setTitle(R.string.pref_clear_audio_queue_on_exit)
-				bind(userPreferences, UserPreferences.clearAudioQueueOnExit)
+				setTitle(R.string.pref_hide_parental_ratings)
+				bind(userPreferences, UserPreferences.hideParentalRatings)
 			}
 		}
 
@@ -92,15 +67,82 @@ class CustomizationPreferencesScreen : OptionsFragment() {
 //		category {
 //			setTitle(R.string.pref_behavior)
 //
-//			shortcut {
-//				setTitle(R.string.pref_audio_track_button)
-//				bind(userPreferences, UserPreferences.shortcutAudioTrack)
+//			checkbox {
+//				setTitle(R.string.pref_clear_audio_queue_on_exit)
+//				bind(userPreferences, UserPreferences.clearAudioQueueOnExit)
 //			}
 //
-//			shortcut {
-//				setTitle(R.string.pref_subtitle_track_button)
-//				bind(userPreferences, UserPreferences.shortcutSubtitleTrack)
-//			}
+////			shortcut {
+////				setTitle(R.string.pref_audio_track_button)
+////				bind(userPreferences, UserPreferences.shortcutAudioTrack)
+////			}
+////
+////			shortcut {
+////				setTitle(R.string.pref_subtitle_track_button)
+////				bind(userPreferences, UserPreferences.shortcutSubtitleTrack)
+////			}
 //		}
+
+		category {
+			setTitle(R.string.lbl_card_styles)
+
+			enum<WatchedIndicatorBehavior> {
+				setTitle(R.string.pref_watched_indicator)
+				bind(userPreferences, UserPreferences.watchedIndicatorBehavior)
+			}
+
+			enum<RatingType> {
+				setTitle(R.string.pref_default_rating)
+				bind(userPreferences, UserPreferences.defaultRatingType)
+			}
+
+			seekbar {
+				setTitle(R.string.pref_card_corners)
+				min = 0
+				max = 12
+				increment = 2
+				bind(userPreferences, UserPreferences.cardCornerRounding)
+			}
+
+			enum<CardSpacing> {
+				setTitle(R.string.pref_card_spacing)
+				bind(userPreferences, UserPreferences.cardSpacing)
+			}
+
+			enum<ColorSelectionBG> {
+				setTitle(R.string.pref_card_color_bg)
+				bind(userPreferences, UserPreferences.cardColorBG)
+			}
+		}
+
+		category {
+			setTitle(R.string.lbl_card_focus_styles)
+
+			checkbox {
+				setTitle(R.string.pref_enable_focus_dimming)
+				bind(userPreferences, UserPreferences.enableFocusDimming)
+			}
+
+			enum<FocusZoomSize> {
+				setTitle(R.string.pref_card_focus_zoom_size)
+				bind(userPreferences, UserPreferences.focusZoomSize)
+			}
+
+			enum<FocusBorderSize> {
+				setTitle(R.string.pref_card_focus_border_size)
+				bind(userPreferences, UserPreferences.focusBorderSize)
+			}
+
+			enum<ColorSelection> {
+				setTitle(R.string.pref_card_focus_border_color)
+				bind(userPreferences, UserPreferences.focusBorderColor)
+				depends { userPreferences[UserPreferences.focusBorderSize] != FocusBorderSize.NONE }
+			}
+
+			enum<FocusIconSize> {
+				setTitle(R.string.pref_card_focus_icon_size)
+				bind(userPreferences, UserPreferences.focusIconSize)
+			}
+		}
 	}
 }
