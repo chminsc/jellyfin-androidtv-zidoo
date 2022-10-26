@@ -6,6 +6,7 @@ import org.jellyfin.androidtv.preference.UserPreferences
 import org.jellyfin.androidtv.preference.constant.*
 import org.jellyfin.androidtv.ui.preference.custom.DurationSeekBarPreference
 import org.jellyfin.androidtv.ui.preference.dsl.*
+import org.jellyfin.androidtv.util.DeviceUtils
 import org.jellyfin.androidtv.util.TimeUtils
 import org.koin.android.ext.android.inject
 
@@ -67,6 +68,11 @@ class PlaybackPreferencesScreen : OptionsFragment() {
 				bind(userPreferences, UserPreferences.mediaQueuingEnabled)
 			}
 
+			checkbox {
+				setTitle(R.string.pref_clear_audio_queue_on_exit)
+				bind(userPreferences, UserPreferences.clearAudioQueueOnExit)
+			}
+
 //			checkbox {
 //				setTitle(R.string.lbl_enable_cinema_mode)
 //				setContent(R.string.sum_enable_cinema_mode)
@@ -113,7 +119,7 @@ class PlaybackPreferencesScreen : OptionsFragment() {
 						if (it) {
 							AlertDialog.Builder(activity)
 								.setTitle(R.string.lbl_warning)
-								.setMessage(R.string.msg_external_path)
+								.setMessage(if (DeviceUtils.hasNewZidooApi()) R.string.msg_external_path else R.string.msg_external_path_legacy)
 								.setPositiveButton(R.string.btn_got_it, null)
 								.show()
 						}
@@ -123,13 +129,6 @@ class PlaybackPreferencesScreen : OptionsFragment() {
 					default { userPreferences.getDefaultValue(UserPreferences.externalVideoPlayerSendPath) }
 				}
 				depends { userPreferences[UserPreferences.videoPlayer] == PreferredVideoPlayer.EXTERNAL }
-			}
-
-			checkbox {
-				setTitle(R.string.lbl_use_legacy_direct_path)
-				setContent(R.string.desc_use_legacy_direct_path)
-				bind(userPreferences, UserPreferences.useLegacySendPath)
-				depends { userPreferences[UserPreferences.externalVideoPlayerSendPath] }
 			}
 
 			checkbox {
@@ -158,24 +157,6 @@ class PlaybackPreferencesScreen : OptionsFragment() {
 				setTitle(R.string.lbl_dts_enabled_device)
 				setContent(R.string.desc_dts_enabled_device)
 				bind(userPreferences, UserPreferences.dtsCapableDevice)
-			}
-
-			checkbox {
-				setTitle(R.string.lbl_enable_extra_surround_codecs)
-				setContent(R.string.desc_enable_extra_surround_codecs)
-				bind(userPreferences, UserPreferences.enableExtraSurroundCodecs)
-			}
-
-			enum<AudioCodecOut> {
-				setTitle(R.string.lbl_forced_audio_codec)
-				bind(userPreferences, UserPreferences.forcedAudioCodec)
-			}
-
-			checkbox {
-				setTitle(R.string.lbl_force_stereo_audio)
-				setContent(R.string.desc_force_stereo_audio)
-				bind(userPreferences, UserPreferences.forceStereo)
-				depends { !userPreferences[UserPreferences.enableExtraSurroundCodecs] }
 			}
 
 //			enum<AudioBehavior> {
