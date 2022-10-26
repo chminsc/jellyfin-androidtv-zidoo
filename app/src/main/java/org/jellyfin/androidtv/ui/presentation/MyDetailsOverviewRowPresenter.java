@@ -3,27 +3,27 @@ package org.jellyfin.androidtv.ui.presentation;
 import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.leanback.widget.RowPresenter;
 
 import org.jellyfin.androidtv.data.model.InfoItem;
 import org.jellyfin.androidtv.databinding.ViewRowDetailsBinding;
-import org.jellyfin.androidtv.ui.AsyncImageView;
 import org.jellyfin.androidtv.ui.DetailRowView;
 import org.jellyfin.androidtv.ui.TextUnderButton;
 import org.jellyfin.androidtv.ui.itemdetail.MyDetailsOverviewRow;
-import org.jellyfin.androidtv.util.InfoLayoutHelper;
 import org.jellyfin.androidtv.util.MarkdownRenderer;
-import org.jellyfin.androidtv.util.Utils;
 import org.jellyfin.sdk.model.api.BaseItemDto;
+import org.jellyfin.sdk.model.api.BaseItemKind;
 
 public class MyDetailsOverviewRowPresenter extends RowPresenter {
     private final MarkdownRenderer markdownRenderer;
     private ViewHolder viewHolder;
+
+    @Override
+    public boolean isUsingDefaultSelectEffect() {
+        return false;
+    }
 
     public MyDetailsOverviewRowPresenter(MarkdownRenderer markdownRenderer) {
         super();
@@ -32,58 +32,15 @@ public class MyDetailsOverviewRowPresenter extends RowPresenter {
 
         // Don't call setActivated() on views
         setSyncActivatePolicy(SYNC_ACTIVATED_CUSTOM);
+        setHeaderPresenter(null);
     }
 
     public final class ViewHolder extends RowPresenter.ViewHolder {
-        private TextView mGenreRow;
-        private LinearLayout mInfoRow;
-        private TextView mTitle;
-        private AsyncImageView mPoster;
-        private TextView mSummary;
-        private LinearLayout mButtonRow;
-        private ProgressBar mProgress;
+        ViewRowDetailsBinding binding;
 
-        private TextView mInfoTitle1;
-        private TextView mInfoTitle2;
-        private TextView mInfoTitle3;
-        private TextView mInfoValue1;
-        private TextView mInfoValue2;
-        private TextView mInfoValue3;
-
-        private RelativeLayout mLeftFrame;
-
-        /**
-         * Constructor for ViewHolder.
-         *
-         * @param rootView The View bound to the Row.
-         * @param binding
-         */
         public ViewHolder(DetailRowView view) {
             super(view);
-
-            ViewRowDetailsBinding binding = view.getBinding();
-
-            mTitle = binding.fdTitle;
-            mInfoTitle1 = binding.infoTitle1;
-            mInfoTitle2 = binding.infoTitle2;
-            mInfoTitle3 = binding.infoTitle3;
-            mInfoValue1 = binding.infoValue1;
-            mInfoValue2 = binding.infoValue2;
-            mInfoValue3 = binding.infoValue3;
-
-            mLeftFrame = binding.leftFrame;
-
-            mGenreRow = binding.fdGenreRow;
-            mInfoRow = binding.fdMainInfoRow;
-            mPoster = binding.mainImage;
-            mProgress = binding.fdProgress;
-            mButtonRow = binding.fdButtonRow;
-            mSummary = binding.fdSummaryText;
-        }
-
-        public void collapseLeftFrame() {
-            ViewGroup.LayoutParams params = mLeftFrame.getLayoutParams();
-            params.width = Utils.convertDpToPixel(view.getContext(), 100);
+            binding = view.getBinding();
         }
     }
 
@@ -100,43 +57,34 @@ public class MyDetailsOverviewRowPresenter extends RowPresenter {
         super.onBindRowViewHolder(holder, item);
 
         MyDetailsOverviewRow row = (MyDetailsOverviewRow) item;
-        ViewHolder vh = (ViewHolder) holder;
+        var vh = (ViewHolder) holder;
+        if (vh == null || vh.binding == null)
+            return;
 
         setTitle(row.getItem().getName());
-        InfoLayoutHelper.addInfoRow(holder.view.getContext(), row.getItem(), vh.mInfoRow, false, false);
-        addGenres(vh.mGenreRow, row.getItem());
+        vh.binding.fdMainInfoRow.setBaseItem(row.getItem());
+        if (row.MediaSourceIndex > 0)
+            vh.binding.fdMainInfoRow.setMediaSourceIndex(row.MediaSourceIndex);
+        addGenres(vh.binding.fdGenreRow, row.getItem());
         setInfo1(row.getInfoItem1());
         setInfo2(row.getInfoItem2());
         setInfo3(row.getInfoItem3());
 
         String posterUrl = row.getImageDrawable();
-        vh.mPoster.load(posterUrl, null, null, 1.0, 0);
-        int progress = row.getProgress();
-        if (progress > 0 && posterUrl != null) {
-            vh.mProgress.setProgress(progress);
-            vh.mProgress.setVisibility(View.VISIBLE);
-        }
+        vh.binding.mainImage.load(posterUrl, null, null, 1.0, 0);
 
         String summaryRaw = row.getSummary();
         if (summaryRaw != null)
-            vh.mSummary.setText(markdownRenderer.toMarkdownSpanned(summaryRaw));
+            vh.binding.fdSummaryText.setText(markdownRenderer.toMarkdownSpanned(summaryRaw));
 
-        switch (row.getItem().getType()) {
-            case PERSON:
-                RelativeLayout.LayoutParams params = (RelativeLayout.LayoutParams) vh.mSummary.getLayoutParams();
-                params.topMargin = 10;
-                params.height = Utils.convertDpToPixel(vh.view.getContext(), 185);
-                vh.mSummary.setMaxLines(9);
-                vh.mGenreRow.setVisibility(View.GONE);
-                vh.mInfoRow.setVisibility(View.GONE);
-                vh.collapseLeftFrame();
-
-                break;
+        if (row.getItem().getType() == BaseItemKind.PERSON) {
+            vh.binding.fdGenreRow.setVisibility(View.GONE);
+            vh.binding.fdMainInfoRow.setVisibility(View.VISIBLE);
         }
 
-        vh.mButtonRow.removeAllViews();
+        vh.binding.fdButtonRow.removeAllViews();
         for (TextUnderButton button : row.getActions()) {
-            vh.mButtonRow.addView(button);
+            vh.binding.fdButtonRow.addView(button);
         }
     }
 
@@ -145,50 +93,46 @@ public class MyDetailsOverviewRowPresenter extends RowPresenter {
     }
 
     public void setTitle(String text) {
-        viewHolder.mTitle.setText(text);
-        if (text.length() > 28) {
-            // raise it up a bit
-            ((RelativeLayout.LayoutParams) viewHolder.mTitle.getLayoutParams()).topMargin = Utils.convertDpToPixel(viewHolder.view.getContext(), 55);
-        }
+        viewHolder.binding.fdTitle.setText(text);
     }
 
     public void setInfo1(InfoItem info) {
         if (info == null) {
-            viewHolder.mInfoTitle1.setText("");
-            viewHolder.mInfoValue1.setText("");
+            viewHolder.binding.infoTitle1.setText("");
+            viewHolder.binding.infoValue1.setText("");
         } else {
-            viewHolder.mInfoTitle1.setText(info.getLabel());
-            viewHolder.mInfoValue1.setText(info.getValue());
+            viewHolder.binding.infoTitle1.setText(info.getLabel());
+            viewHolder.binding.infoValue1.setText(info.getValue());
         }
     }
 
     public void setInfo2(InfoItem info) {
         if (info == null) {
-            viewHolder.mInfoTitle2.setText("");
-            viewHolder.mInfoValue2.setText("");
+            viewHolder.binding.infoTitle2.setText("");
+            viewHolder.binding.infoValue2.setText("");
         } else {
-            viewHolder.mInfoTitle2.setText(info.getLabel());
-            viewHolder.mInfoValue2.setText(info.getValue());
+            viewHolder.binding.infoTitle2.setText(info.getLabel());
+            viewHolder.binding.infoValue2.setText(info.getValue());
         }
     }
 
     public void setInfo3(InfoItem info) {
         if (info == null) {
-            viewHolder.mInfoTitle3.setText("");
-            viewHolder.mInfoValue3.setText("");
+            viewHolder.binding.infoTitle3.setText("");
+            viewHolder.binding.infoValue3.setText("");
         } else {
-            viewHolder.mInfoTitle3.setText(info.getLabel());
-            viewHolder.mInfoValue3.setText(info.getValue());
+            viewHolder.binding.infoTitle3.setText(info.getLabel());
+            viewHolder.binding.infoValue3.setText(info.getValue());
         }
     }
 
     public TextView getSummaryView() {
-        return viewHolder.mSummary;
+        return viewHolder.binding.fdSummaryText;
     }
 
     public void updateEndTime(String text) {
-        if (viewHolder != null && viewHolder.mInfoValue3 != null)
-            viewHolder.mInfoValue3.setText(text);
+        if (viewHolder != null && viewHolder.binding.infoTitle3.length() > 0)
+            viewHolder.binding.infoValue3.setText(text);
     }
 
     @Override
