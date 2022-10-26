@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -80,12 +79,15 @@
         android:textSize="14sp" />
 
     <org.jellyfin.androidtv.ui.ClockUserView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:id="@+id/clock"
-        android:layout_alignTop="@+id/title"
-        android:layout_marginEnd="40sp"
-        android:layout_alignParentEnd="true" />
+        android:layout_width="wrap_content"
+        android:layout_height="@dimen/user_clock_height"
+        android:layout_marginTop="@dimen/safe_area_vertical"
+        android:layout_marginEnd="@dimen/safe_area_horizontal_large"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        tools:layout_width="200dp"
+        />
 
     <ImageView
         android:layout_width="150sp"
@@ -151,7 +153,6 @@
         android:id="@+id/filterStatus"
         android:layout_alignEnd="@+id/programVScroller"
         android:gravity="end"
-        android:layout_alignRight="@+id/programVScroller"
         android:layout_alignParentBottom="true"
         android:layout_marginBottom="2sp"
         android:layout_marginEnd="10sp"
