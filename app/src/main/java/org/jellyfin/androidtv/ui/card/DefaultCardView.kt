@@ -12,6 +12,7 @@ import androidx.core.view.updateLayoutParams
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.databinding.ViewCardDefaultBinding
 import org.jellyfin.androidtv.util.MenuBuilder
+import org.jellyfin.androidtv.util.getFractionFromAttribute
 import org.jellyfin.androidtv.util.popupMenu
 import org.jellyfin.androidtv.util.showIfNotEmpty
 import kotlin.math.roundToInt
@@ -78,15 +79,16 @@ class DefaultCardView @JvmOverloads constructor(
 	override fun onFocusChanged(gainFocus: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
 		super.onFocusChanged(gainFocus, direction, previouslyFocusedRect)
 
-		val scaleRes = if (gainFocus) R.fraction.card_scale_focus else R.fraction.card_scale_default
-		val scale = resources.getFraction(scaleRes, 1, 1)
+		val scale = if (gainFocus) context.getFractionFromAttribute(R.attr.cardScaleFocus) else context.getFractionFromAttribute(R.attr.cardScaleDefault)
 
-		post {
-			animate().apply {
-				scaleX(scale)
-				scaleY(scale)
-				duration = resources.getInteger(R.integer.card_scale_duration).toLong()
-				withLayer()
+		scale?.let {
+			post {
+				animate().apply {
+					scaleX(scale)
+					scaleY(scale)
+					duration = resources.getInteger(R.integer.card_scale_duration).toLong()
+					withLayer()
+				}
 			}
 		}
 	}
