@@ -10,7 +10,12 @@ java {
 }
 
 buildscript {
+	repositories {
+		google()
+	}
+
 	dependencies {
+//		classpath("com.android.tools:r8:3.3.75")  // Must be before the Gradle Plugin for Android.
 		classpath(libs.android.gradle)
 		classpath(libs.kotlin.gradle)
 	}

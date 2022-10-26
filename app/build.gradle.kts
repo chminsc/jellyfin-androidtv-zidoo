@@ -1,9 +1,10 @@
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+import org.jetbrains.kotlin.cli.common.toBooleanLenient
 
 plugins {
 	id("com.android.application")
 	kotlin("android")
-	kotlin("kapt")
+	alias(libs.plugins.kotlin.ksp)
 	alias(libs.plugins.kotlin.serialization)
 	alias(libs.plugins.aboutlibraries)
 }
@@ -11,7 +12,7 @@ plugins {
 android {
 	namespace = "org.jellyfin.androidtv"
 	compileSdk = gradleLocalProperties(rootDir).getProperty("COMPILE_SDK_NR", "32").toInt()
-	ndkVersion = "25.0.8775105"
+	ndkVersion = "25.1.8937393"
 
 	defaultConfig {
 		minSdk = gradleLocalProperties(rootDir).getProperty("MIN_SDK_NR", "23").toInt()
@@ -23,14 +24,16 @@ android {
 		versionCode = getVersionCode(versionName!!)
 		setProperty("archivesBaseName", "jellyfin-androidtv-v$versionName")
 
-		ndk.abiFilters.addAll(setOf("armeabi-v7a"))
+		ndk.abiFilters.addAll(setOf("armeabi-v7a","x86"))
 	}
 
 	sourceSets["main"].java.srcDirs("src/main/kotlin")
 	sourceSets["test"].java.srcDirs("src/test/kotlin")
 
 	buildFeatures {
-		viewBinding = true
+		viewBinding = gradleLocalProperties(rootDir).getProperty("BUILD_VIEW_BINDING", "true").toBooleanLenient()
+		dataBinding = gradleLocalProperties(rootDir).getProperty("BUILD_DATA_BINDING", "false").toBooleanLenient()
+		mlModelBinding = gradleLocalProperties(rootDir).getProperty("BUILD_MODEL_BINDING", "false").toBooleanLenient()
 	}
 
 	compileOptions {
@@ -80,7 +83,7 @@ android {
 			resValue("string", "app_search_suggest_intent_data", "content://${namespace}.content/intent")
 
 			// Set flavored application name
-			resValue("string", "app_name", "@string/app_name_release")
+			resValue("string", "app_name", "Jellyfin")
 
 			buildConfigField("boolean", "DEVELOPMENT", "false")
 		}
@@ -95,7 +98,7 @@ android {
 			resValue("string", "app_search_suggest_intent_data", "content://${namespace + applicationIdSuffix}.content/intent")
 
 			// Set flavored application name
-			resValue("string", "app_name", "@string/app_name_debug")
+			resValue("string", "app_name", "Jellyfin Debug")
 
 			buildConfigField("boolean", "DEVELOPMENT", (defaultConfig.versionCode!! < 100).toString())
 		}
@@ -163,6 +166,7 @@ dependencies {
 	implementation(libs.androidx.window)
 	implementation(libs.androidx.cardview)
 	implementation(libs.androidx.startup)
+	implementation(libs.androidx.compose.ui)
 
 	// Dependency Injection
 	implementation(libs.bundles.koin)
@@ -175,15 +179,18 @@ dependencies {
 	implementation(libs.jellyfin.exoplayer.ffmpegextension)
 	implementation(libs.libvlc)
 
-	// Jcifs
-	implementation(libs.jcifs)
+	// Apfloat
+	implementation(libs.apfloat)
+
+	// kotlin-extensions
+	implementation(libs.carleslc)
 
 	// Markdown
 	implementation(libs.bundles.markwon)
 
 	// Image utility
 	implementation(libs.glide.core)
-	kapt(libs.glide.compiler)
+	ksp(libs.glide.ksp)
 	implementation(libs.kenburnsview)
 
 	// Crash Reporting

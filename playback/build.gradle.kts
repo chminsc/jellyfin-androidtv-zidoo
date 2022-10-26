@@ -1,4 +1,5 @@
 import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
+import org.jetbrains.kotlin.cli.common.toBooleanLenient
 
 plugins {
 	id("com.android.library")
@@ -12,8 +13,10 @@ android {
         targetSdk = gradleLocalProperties(rootDir).getProperty("TARGET_SDK_NR", "32").toInt()
     }
 
-    buildFeatures {
-		viewBinding = true
+	buildFeatures {
+		viewBinding = gradleLocalProperties(rootDir).getProperty("BUILD_VIEW_BINDING", "true").toBooleanLenient()
+		dataBinding = gradleLocalProperties(rootDir).getProperty("BUILD_DATA_BINDING", "false").toBooleanLenient()
+		mlModelBinding = gradleLocalProperties(rootDir).getProperty("BUILD_MODEL_BINDING", "false").toBooleanLenient()
 	}
 
 	compileOptions {
