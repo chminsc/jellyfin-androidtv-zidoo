@@ -4,8 +4,12 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.text.format.DateFormat;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import org.jellyfin.androidtv.R;
 
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Calendar;
@@ -159,6 +163,27 @@ public class TimeUtils {
         }
 
         return DateFormat.getDateFormat(context).format(date);
+    }
+
+    public static String getFriendlyYearRange(@NonNull Context context, @NonNull Date dateStart, @Nullable Date dateEnd) {
+        Calendar startCal = Calendar.getInstance();
+        startCal.setTime(dateStart);
+        String startString = new SimpleDateFormat("yyyy", Locale.getDefault()).format(TimeUtils.convertToLocalDate(dateStart));
+        String endString = "";
+        if (dateEnd != null) {
+            Calendar endCal = Calendar.getInstance();
+            endCal.setTime(dateEnd);
+            if (startCal.get(Calendar.YEAR) == endCal.get(Calendar.YEAR)) {
+                endString = new SimpleDateFormat(" - MMM yyyy", Locale.getDefault()).format(TimeUtils.convertToLocalDate(endCal.getTime()));
+            } else {
+                endString = new SimpleDateFormat(" - yyyy", Locale.getDefault()).format(TimeUtils.convertToLocalDate(endCal.getTime()));
+            }
+        } else {
+            endString = " - " + context.getString(R.string.lbl_present);
+        }
+
+
+        return String.format("%s%s", startString, endString);
     }
 
     public static Date getDate(LocalDateTime date) {
