@@ -5,6 +5,7 @@ import static org.koin.java.KoinJavaComponent.inject;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 
@@ -21,16 +22,15 @@ import org.jellyfin.apiclient.interaction.EmptyResponse;
 import org.jellyfin.apiclient.interaction.Response;
 import org.jellyfin.apiclient.model.dto.BaseItemDto;
 import org.jellyfin.apiclient.model.dto.BaseItemType;
-import org.jellyfin.apiclient.model.entities.ImageType;
 import org.jellyfin.apiclient.model.livetv.ChannelInfoDto;
 import org.jellyfin.apiclient.model.livetv.SeriesTimerInfoDto;
+import org.jellyfin.sdk.model.api.BaseItemKind;
 import org.jellyfin.sdk.model.api.BaseItemPerson;
 import org.jellyfin.sdk.model.api.SearchHint;
 import org.jellyfin.sdk.model.api.UserDto;
 import org.koin.java.KoinJavaComponent;
 
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 
 import kotlin.Lazy;
 import timber.log.Timber;
@@ -157,15 +157,7 @@ public class BaseRowItem {
     }
 
     public boolean isFolder() {
-        return type == ItemType.BaseItem && baseItem != null && baseItem.getIsFolderItem();
-    }
-
-    public boolean showCardInfoOverlay() {
-        return type == ItemType.BaseItem && baseItem != null
-                && Arrays.asList(BaseItemType.Folder, BaseItemType.PhotoAlbum,
-                BaseItemType.UserView, BaseItemType.CollectionFolder, BaseItemType.Photo,
-                BaseItemType.Video, BaseItemType.Person, BaseItemType.Playlist,
-                BaseItemType.MusicArtist).contains(baseItem.getBaseItemType());
+        return BaseItemType.Folder.equals(getBaseItemType());
     }
 
     public boolean isValid() {
@@ -216,17 +208,6 @@ public class BaseRowItem {
         }
 
         return false;
-    }
-
-    public String getCardName(Context context) {
-        switch (type) {
-            case BaseItem:
-                if (baseItem.getBaseItemType() == BaseItemType.Audio) {
-                    return baseItem.getAlbumArtist() != null ? baseItem.getAlbumArtist() : baseItem.getAlbum() != null ? baseItem.getAlbum() : "<Unknown>";
-                }
-            default:
-                return getFullName(context);
-        }
     }
 
     public String getFullName(Context context) {
@@ -301,7 +282,7 @@ public class BaseRowItem {
     public String getSubText(Context context) {
         switch (type) {
             case BaseItem:
-                return BaseItemUtils.getSubName(baseItem, context);
+                return BaseItemUtils.getCardContentDisplay(baseItem, context);
             case Person:
                 return person.getRole();
             case Chapter:
@@ -372,7 +353,7 @@ public class BaseRowItem {
     public int getChildCount() {
         switch (type) {
             case BaseItem:
-                return isFolder() && baseItem.getBaseItemType() != BaseItemType.MusicArtist && baseItem.getChildCount() != null ? baseItem.getChildCount() : -1;
+                return baseItem.getIsFolderItem() && baseItem.getBaseItemType() != BaseItemType.MusicArtist && baseItem.getChildCount() != null ? baseItem.getChildCount() : -1;
             case Person:
             case Chapter:
             case SearchHint:
@@ -390,56 +371,116 @@ public class BaseRowItem {
         if (baseItem != null && baseItem.getBaseItemType() == BaseItemType.Playlist && baseItem.getCumulativeRunTimeTicks() != null) {
             return TimeUtils.formatMillis(baseItem.getCumulativeRunTimeTicks() / 10000);
         } else {
-            Integer count = getChildCount();
-            return count > 0 ? count.toString() : "";
+            int count = getChildCount();
+            return count > 0 ? Integer.toString(count) : "";
         }
     }
 
     @Nullable
-    public String getPrimaryImageUrl(Context context, int maxHeight) {
-        switch (type) {
-            case BaseItem:
-            case LiveTvProgram:
-            case LiveTvRecording:
-                return ImageUtils.getPrimaryImageUrl(baseItem, maxHeight);
-            case Person:
-                return ImageUtils.getPrimaryImageUrl(person, maxHeight);
-            case Chapter:
-                return chapterInfo.getImagePath();
-            case SearchHint:
-                return ImageUtils.getPrimaryImageUrl(searchHint, maxHeight);
-            case LiveTvChannel:
-                return ImageUtils.getPrimaryImageUrl(channelInfo, apiClient.getValue());
-            case GridButton:
-                return ImageUtils.getResourceUrl(context, gridButton.getImageRes());
-            case SeriesTimer:
-                return ImageUtils.getResourceUrl(context, R.drawable.tile_land_series_timer);
-            default:
-                return null;
-        }
+    public String getPrimaryImageUrl(Context context, @Nullable Integer maxHeight) {
+        if (!isValid())
+            return null;
+
+        return switch (type) {
+            case BaseItem, LiveTvProgram, LiveTvRecording -> ImageUtils.getPrimaryImageUrl(baseItem, maxHeight);
+            case Person -> ImageUtils.getPrimaryImageUrl(person, maxHeight);
+            case Chapter -> chapterInfo.getImagePath();
+            case SearchHint -> ImageUtils.getPrimaryImageUrl(searchHint, maxHeight);
+            case LiveTvChannel -> ImageUtils.getPrimaryImageUrl(channelInfo, apiClient.getValue());
+            case GridButton -> ImageUtils.getResourceUrl(context, gridButton.getImageRes());
+            case SeriesTimer -> ImageUtils.getResourceUrl(context, R.drawable.tile_land_series_timer);
+        };
     }
 
     public Drawable getBadgeImage(Context context) {
-        if (baseItem != null) {
-            switch (type) {
-                case BaseItem:
-                    if (baseItem.getBaseItemType() == BaseItemType.Movie && baseItem.getCriticRating() != null) {
-                        return baseItem.getCriticRating() > 59 ? ContextCompat.getDrawable(context, R.drawable.ic_rt_fresh) : ContextCompat.getDrawable(context, R.drawable.ic_rt_rotten);
-                    } else if (baseItem.getBaseItemType() == BaseItemType.Program && baseItem.getTimerId() != null) {
-                        return baseItem.getSeriesTimerId() != null ? ContextCompat.getDrawable(context, R.drawable.ic_record_series_red) : ContextCompat.getDrawable(context, R.drawable.ic_record_red);
-                    }
-                    break;
-                case Person:
-                case LiveTvProgram:
-                    if (baseItem.getTimerId() != null) {
-                        return baseItem.getSeriesTimerId() != null ? ContextCompat.getDrawable(context, R.drawable.ic_record_series_red) : ContextCompat.getDrawable(context, R.drawable.ic_record_red);
-                    }
-                case Chapter:
-                    break;
-            }
-        }
+        if (!isValid())
+            return ContextCompat.getDrawable(context, R.drawable.blank10x10);
 
-        return ContextCompat.getDrawable(context, R.drawable.blank10x10);
+        switch (type) {
+            case BaseItem:
+                if (baseItem.getBaseItemType() == BaseItemType.Movie && baseItem.getCriticRating() != null) {
+                    return baseItem.getCriticRating() > 59 ? ContextCompat.getDrawable(context, R.drawable.ic_rt_fresh) : ContextCompat.getDrawable(context, R.drawable.ic_rt_rotten);
+                } else if (baseItem.getBaseItemType() == BaseItemType.Program && baseItem.getTimerId() != null) {
+                    return baseItem.getSeriesTimerId() != null ? ContextCompat.getDrawable(context, R.drawable.ic_record_series_red) : ContextCompat.getDrawable(context, R.drawable.ic_record_red);
+                } else {
+                    return ContextCompat.getDrawable(context, R.drawable.blank10x10);
+                }
+            case Person:
+            case LiveTvProgram:
+                if (baseItem.getTimerId() != null) {
+                    return baseItem.getSeriesTimerId() != null ? ContextCompat.getDrawable(context, R.drawable.ic_record_series_red) : ContextCompat.getDrawable(context, R.drawable.ic_record_red);
+                } else {
+                    return ContextCompat.getDrawable(context, R.drawable.blank10x10);
+                }
+            default:
+                return ContextCompat.getDrawable(context, R.drawable.blank10x10);
+        }
+    }
+
+    @Nullable
+    public Drawable getDefaultImage(Context context, boolean isLandscape) {
+        if (!isValid())
+            return ContextCompat.getDrawable(context, R.drawable.blank30x30);
+
+        return switch (type) {
+            case BaseItem -> switch (getBaseItemType()) {
+                case Audio, MusicAlbum -> ContextCompat.getDrawable(context, R.drawable.tile_audio);
+                case Person, MusicArtist -> ContextCompat.getDrawable(context, R.drawable.tile_port_person);
+                case Season, Series, Episode -> ContextCompat.getDrawable(context, isLandscape ? R.drawable.tile_land_tv : R.drawable.tile_port_tv);
+                case CollectionFolder, UserView, Folder, Genre, MusicGenre, PhotoAlbum, Playlist -> ContextCompat.getDrawable(context, isLandscape ? R.drawable.tile_land_folder : R.drawable.tile_port_folder);
+                case Photo -> ContextCompat.getDrawable(context, R.drawable.tile_land_photo);
+                default -> ContextCompat.getDrawable(context, R.drawable.tile_port_video);
+            };
+            case LiveTvChannel -> ContextCompat.getDrawable(context, R.drawable.tile_tv);
+            case LiveTvProgram, LiveTvRecording -> ContextCompat.getDrawable(context, isLandscape ? R.drawable.tile_land_tv : R.drawable.tile_port_tv);
+            case Person -> ContextCompat.getDrawable(context, R.drawable.tile_port_person);
+            case Chapter -> ContextCompat.getDrawable(context, R.drawable.tile_chapter);
+            case SearchHint -> {
+                String type = getSearchHint().getType();
+                if (BaseItemKind.EPISODE.getSerialName().equals(type)) {
+                    yield ContextCompat.getDrawable(context, isLandscape ? R.drawable.tile_land_tv : R.drawable.tile_port_tv);
+                } else if (BaseItemKind.PERSON.getSerialName().equals(type)) {
+                    yield ContextCompat.getDrawable(context, R.drawable.tile_port_person);
+                } else {
+                    yield ContextCompat.getDrawable(context, R.drawable.tile_port_video);
+                }
+            }
+            case GridButton -> ContextCompat.getDrawable(context, R.drawable.tile_port_grid);
+            case SeriesTimer -> ContextCompat.getDrawable(context, isLandscape ? R.drawable.tile_land_series_timer : R.drawable.tile_port_series_timer);
+        };
+    }
+
+    @Nullable
+    public Drawable getTypeIconImage(@NonNull Context context) {
+        if (!isValid())
+            return ContextCompat.getDrawable(context, R.drawable.blank20x20);
+
+        return switch (getItemType()) {
+            case BaseItem -> switch (getBaseItemType()) {
+                case Photo -> ContextCompat.getDrawable(context, R.drawable.ic_camera);
+                case PhotoAlbum -> ContextCompat.getDrawable(context, R.drawable.ic_photos);
+                case Video, Movie -> ContextCompat.getDrawable(context, R.drawable.ic_movie);
+                case Series, Season, Channel, ChannelVideoItem, Episode, LiveTvChannel, MusicVideo, Trailer, TvChannel -> ContextCompat.getDrawable(context, R.drawable.ic_tv);
+                case MusicArtist -> ContextCompat.getDrawable(context, R.drawable.ic_artist);
+                case Person -> ContextCompat.getDrawable(context, R.drawable.ic_user);
+                case MusicAlbum -> ContextCompat.getDrawable(context, R.drawable.ic_music_album);
+                case Audio -> ContextCompat.getDrawable(context, R.drawable.ic_select_audio);
+                case AggregateFolder, BoxSet, UserView, ChannelFolderItem, CollectionFolder, Folder, MovieGenreFolder, MusicGenreFolder -> ContextCompat.getDrawable(context, R.drawable.ic_folder);
+                case Genre, MusicGenre, MovieGenre, Studio -> ContextCompat.getDrawable(context, R.drawable.ic_masks);
+                case Playlist -> ContextCompat.getDrawable(context, R.drawable.ic_video_queue);
+                case Program -> ContextCompat.getDrawable(context, R.drawable.ic_tv_guide);
+                case Recording -> ContextCompat.getDrawable(context, R.drawable.ic_record_red);
+                case RecordingGroup -> ContextCompat.getDrawable(context, R.drawable.ic_record_series_red);
+                case SeriesTimer -> ContextCompat.getDrawable(context, R.drawable.ic_tv_timer);
+            };
+            case Person -> ContextCompat.getDrawable(context, R.drawable.ic_user);
+            case Chapter -> ContextCompat.getDrawable(context, R.drawable.ic_select_chapter);
+            case SearchHint -> ContextCompat.getDrawable(context, R.drawable.ic_search);
+            case LiveTvChannel, LiveTvProgram -> ContextCompat.getDrawable(context, R.drawable.ic_tv);
+            case LiveTvRecording -> ContextCompat.getDrawable(context, R.drawable.ic_record_red);
+            case GridButton -> ContextCompat.getDrawable(context, R.drawable.ic_grid);
+            case SeriesTimer -> ContextCompat.getDrawable(context, R.drawable.ic_tv_timer);
+        };
     }
 
     public void refresh(final EmptyResponse outerResponse) {
