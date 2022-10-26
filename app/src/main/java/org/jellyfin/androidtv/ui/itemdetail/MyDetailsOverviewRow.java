@@ -21,13 +21,13 @@ public class MyDetailsOverviewRow extends Row {
     private InfoItem mInfoItem2;
     private InfoItem mInfoItem3;
 
+    public int MediaSourceIndex;
 
     private List<TextUnderButton> mActions = new ArrayList<>();
 
     public MyDetailsOverviewRow(BaseItemDto item) {
         mItem = item;
     }
-
 
     public String getSummary() {
         return mSummary;
@@ -62,6 +62,8 @@ public class MyDetailsOverviewRow extends Row {
     public void addAction(TextUnderButton button) {
         mActions.add(button);
     }
+
+    public void clearActions() { mActions.clear(); }
 
     public InfoItem getInfoItem1() {
         return mInfoItem1;
