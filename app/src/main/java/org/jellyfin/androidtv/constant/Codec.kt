@@ -8,6 +8,7 @@ object Codec {
 		const val AVI = "avi"
 		const val DVR_MS = "dvr-ms"
 		const val FLAC = "flac"
+		const val ISO = "iso"
 		const val M2V = "m2v"
 		const val M4V = "m4v"
 		const val MKV = "mkv"
@@ -68,6 +69,7 @@ object Codec {
 		const val MPEG2VIDEO = "mpeg2video"
 		const val VP8 = "vp8"
 		const val VP9 = "vp9"
+		const val VC1 = "vc1"
 	}
 
 	object Subtitle {
