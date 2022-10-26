@@ -94,7 +94,7 @@ val appModule = module {
 	viewModel { NextUpViewModel(get(), get(), get(), get()) }
 	viewModel { PictureViewerViewModel(get()) }
 
-	single { BackgroundService(get(), get(), get(), get()) }
+	single { BackgroundService(get(), get(), get(), get(), get()) }
 
 	single { MarkdownRenderer(get()) }
 }
