@@ -7,6 +7,7 @@ import android.widget.FrameLayout
 import androidx.annotation.DrawableRes
 import androidx.core.view.isVisible
 import androidx.core.view.setPadding
+import me.carleslc.kotlin.extensions.strings.isNotNullOrBlank
 import org.jellyfin.androidtv.databinding.TextUnderButtonBinding
 import org.jellyfin.androidtv.util.dp
 
@@ -22,10 +23,12 @@ class TextUnderButton @JvmOverloads constructor(
 		isFocusable = true
 		isFocusableInTouchMode = true
 		descendantFocusability = FOCUS_BLOCK_DESCENDANTS
+		layoutParams = LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.MATCH_PARENT)
+		clipChildren = false // NOTE: needed for second textline, without messing-up layout
 	}
 
 	fun setLabel(text: String?) {
-		binding.label.isVisible = text != null
+		binding.label.isVisible = text.isNotNullOrBlank()
 		binding.label.text = text
 		binding.imageButton.contentDescription = text
 	}
