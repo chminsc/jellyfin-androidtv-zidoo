@@ -1,16 +1,16 @@
 package org.jellyfin.androidtv.ui.browsing
 
 import org.jellyfin.androidtv.R
+import org.jellyfin.androidtv.constant.CardInfoType
+import org.jellyfin.androidtv.constant.CardSpacing
 import org.jellyfin.androidtv.constant.GridDirection
 import org.jellyfin.androidtv.constant.ImageType
-import org.jellyfin.androidtv.constant.PosterSize
 import org.jellyfin.androidtv.preference.LibraryPreferences
 import org.jellyfin.androidtv.preference.PreferencesRepository
 import org.jellyfin.androidtv.preference.constant.LanguagesAudio
-import org.jellyfin.androidtv.ui.preference.dsl.OptionsFragment
-import org.jellyfin.androidtv.ui.preference.dsl.checkbox
-import org.jellyfin.androidtv.ui.preference.dsl.enum
-import org.jellyfin.androidtv.ui.preference.dsl.optionsScreen
+import org.jellyfin.androidtv.preference.constant.RatingType
+import org.jellyfin.androidtv.ui.preference.custom.DurationSeekBarPreference
+import org.jellyfin.androidtv.ui.preference.dsl.*
 import org.jellyfin.preference.store.PreferenceStore
 import org.koin.android.ext.android.inject
 
@@ -30,20 +30,7 @@ class DisplayPreferencesScreen : OptionsFragment() {
 		setTitle(R.string.lbl_library_preferences)
 
 		category {
-			setTitle(R.string.lbl_display_preferences)
-
-			enum<PosterSize> {
-				setTitle(R.string.lbl_image_size)
-				bind(libraryPreferences, LibraryPreferences.posterSize)
-			}
-			enum<ImageType> {
-				setTitle(R.string.lbl_image_type)
-				bind(libraryPreferences, LibraryPreferences.imageType)
-			}
-			enum<GridDirection> {
-				setTitle(R.string.grid_direction)
-				bind(libraryPreferences, LibraryPreferences.gridDirection)
-			}
+			setTitle(R.string.lbl_library_general_preferences)
 
 			if (allowViewSelection) {
 				checkbox {
@@ -53,6 +40,48 @@ class DisplayPreferencesScreen : OptionsFragment() {
 
 					bind(libraryPreferences, LibraryPreferences.enableSmartScreen)
 				}
+			}
+		}
+
+		category {
+			setTitle(R.string.lbl_display_preferences)
+
+			enum<ImageType> {
+				setTitle(R.string.lbl_image_type)
+				bind(libraryPreferences, LibraryPreferences.imageType)
+			}
+
+			seekbar {
+				setTitle(R.string.lbl_grid_size)
+				min = LibraryPreferences.getGridSizeChecked(1, libraryPreferences[LibraryPreferences.gridDirection], libraryPreferences[LibraryPreferences.imageType])
+				max = LibraryPreferences.getGridSizeChecked(30, libraryPreferences[LibraryPreferences.gridDirection], libraryPreferences[LibraryPreferences.imageType])
+				increment = 1
+				valueFormatter = object : DurationSeekBarPreference.ValueFormatter() {
+					override fun display(value: Int): String {
+						return LibraryPreferences.getGridSizeChecked(value, libraryPreferences[LibraryPreferences.gridDirection], libraryPreferences[LibraryPreferences.imageType]).toString()
+					}
+				}
+				bind(libraryPreferences, LibraryPreferences.gridSize)
+			}
+
+			enum<GridDirection> {
+				setTitle(R.string.grid_direction)
+				bind(libraryPreferences, LibraryPreferences.gridDirection)
+			}
+
+			enum<CardInfoType> {
+				setTitle(R.string.pref_card_infotype)
+				bind(libraryPreferences, LibraryPreferences.cardInfoType)
+			}
+
+			enum<CardSpacing> {
+				setTitle(R.string.pref_card_spacing)
+				bind(libraryPreferences, LibraryPreferences.cardSpacing)
+			}
+
+			enum<RatingType> {
+				setTitle(R.string.pref_default_rating)
+				bind(libraryPreferences, LibraryPreferences.ratingType)
 			}
 		}
 
