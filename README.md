@@ -5,8 +5,6 @@
 ---  
   
 <p align="center">  
-<img alt="Logo banner" src="https://raw.githubusercontent.com/jellyfin/jellyfin-ux/master/branding/SVG/banner-logo-solid.svg?sanitize=true"/>  
-<br/><br/>  
 <a href="https://github.com/jellyfin/jellyfin-androidtv">  
 <img alt="GPL 2.0 License" src="https://img.shields.io/github/license/jellyfin/jellyfin-androidtv.svg"/>  
 </a>  
