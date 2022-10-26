@@ -5,20 +5,56 @@
         <item name="android:datePickerMode">spinner</item>
     </style>
 
-    <style name="Widget.Jellyfin.Row.Header" parent="Widget.Leanback.Row.Header">
-        <item name="android:textColor">?attr/headerTextColor</item>
+    <style name="Widget.Jellyfin.Row.Header" parent="@style/Widget.Leanback.Row.Header">
+        <item name="android:textSize">@dimen/browse_header_text_size</item>
+        <item name="android:textColor">?android:attr/textColorPrimary</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:height">@dimen/browse_header_height</item>
+        <item name="android:minHeight">10dp</item>
+        <item name="android:minWidth">1dp</item>
+        <item name="android:includeFontPadding">false</item>
+        <item name="android:shadowRadius">3</item>
+        <item name="android:shadowColor">@color/black</item>
+    </style>
+
+    <style name="Widget.Jellyfin.Row.HeaderDock" parent="@style/Widget.Leanback.Row.HeaderDock">
+        <item name="android:elevation">@dimen/row_headerdock_elevation</item>
+    </style>
+
+    <style name="Widget.Jellyfin.Row.HorizontalGridView" parent="@style/Widget.Leanback.Row.HorizontalGridView">
+        <item name="focusOutEnd">true</item>
+    </style>
+
+    <style name="Widget.Jellyfin.Rows.VerticalGridView" parent="@style/Widget.Leanback.Rows.VerticalGridView">
+    </style>
+
+    <style name="Widget.Jellyfin.GridItems.VerticalGridView" parent="@style/Widget.Leanback.GridItems.VerticalGridView">
+        <item name="android:layout_width">match_parent</item>
     </style>
 
     <style name="player_progress" parent="android:Widget.ProgressBar.Horizontal">
         <item name="android:progressDrawable">@drawable/progress_bar</item>
-        <item name="android:minHeight">5sp</item>
-        <item name="android:maxHeight">5sp</item>
+        <item name="android:minHeight">4dp</item>
     </style>
 
     <style name="overlay_progress" parent="android:Widget.ProgressBar.Horizontal">
         <item name="android:progressDrawable">@drawable/progress_bar</item>
-        <item name="android:minHeight">5sp</item>
-        <item name="android:maxHeight">5sp</item>
+        <item name="android:minHeight">4dp</item>
+    </style>
+
+    <style name="card_progress_round" parent="android:Widget.ProgressBar.Horizontal">
+        <item name="android:progressDrawable">@drawable/progress_bar_card_round</item>
+        <item name="android:minHeight">4dp</item>
+    </style>
+
+    <style name="card_progress" parent="android:Widget.ProgressBar.Horizontal">
+        <item name="android:progressDrawable">@drawable/progress_bar_card</item>
+        <item name="android:minHeight">4dp</item>
+    </style>
+
+    <style name="card_progress_focus" parent="android:Widget.ProgressBar.Horizontal">
+        <item name="android:progressDrawable">@drawable/progress_bar_card_focus</item>
+        <item name="android:minHeight">4dp</item>
     </style>
 
     <style name="WindowAnimation"></style>
@@ -52,6 +88,16 @@
         <item name="android:stateListAnimator">@null</item>
     </style>
 
+    <style name="Button.TextUnder" parent="@style/Button.Icon">
+        <item name="android:background">@drawable/button_default_back</item>
+        <item name="android:paddingTop">2dp</item>
+        <item name="android:paddingBottom">2dp</item>
+        <item name="android:paddingStart">2dp</item>
+        <item name="android:paddingEnd">2dp</item>
+        <item name="android:minHeight">8dp</item>
+        <item name="android:stateListAnimator">@null</item>
+    </style>
+
     <style name="Button.Icon" parent="android:Widget.Button">
         <item name="android:background">@drawable/button_icon_back</item>
         <item name="android:foreground">@drawable/button_icon_ripple</item>
@@ -64,7 +110,18 @@
         <item name="android:stateListAnimator">@null</item>
     </style>
 
-    <style name="Button.Icon.Animated" parent="Button.Icon">
+    <style name="Button.Icon.Toolbar" parent="@style/Button.Icon">
+        <item name="android:tint">@drawable/button_icon_tint_toolbar</item>
+        <item name="android:tintMode">multiply</item>
+        <item name="android:scaleType">fitCenter</item>
+        <item name="android:adjustViewBounds">true</item>
+        <item name="android:paddingTop">0dp</item>
+        <item name="android:paddingBottom">0dp</item>
+        <item name="android:paddingStart">0dp</item>
+        <item name="android:paddingEnd">0dp</item>
+    </style>
+
+    <style name="Button.Icon.Animated" parent="@style/Button.Icon">
         <item name="android:tint">@drawable/button_icon_tint_animated</item>
     </style>
 
