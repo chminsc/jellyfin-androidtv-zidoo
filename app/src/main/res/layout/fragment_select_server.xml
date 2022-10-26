@@ -5,8 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="horizontal"
-    android:paddingHorizontal="@dimen/overscan_horizontal"
-    android:paddingBottom="@dimen/overscan_vertical">
+    android:paddingHorizontal="@dimen/safe_area_horizontal_large"
+    android:paddingVertical="@dimen/safe_area_vertical_large">
 
     <LinearLayout
         android:layout_width="0dp"
