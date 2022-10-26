@@ -1,4 +1,4 @@
-package org.jellyfin.androidtv.ui;
+package org.jellyfin.androidtv.util;
 
 import static org.jellyfin.androidtv.ui.playback.PlayerApiHelpers.SUBTITLE_DISABLED;
 import static org.jellyfin.androidtv.util.Utils.equalsIgnoreCaseTrim;
@@ -477,7 +477,7 @@ public class AudioSubtitleHelper {
                 audIdx = defaultAudioTracks.get(0); // found default audio
             }
         }
-        // check if we get a native audio stream
+        // check if we can get a native audio stream
         if (audIdx == null) {
             TreeMap<Integer, Pair<MediaStream, Integer>> nativeAudioMerits = evaluateMediaStreams(mediaStreams, prefs, MediaStreamType.Audio, audioCode, true, false);
             if (!nativeAudioMerits.isEmpty()) {
@@ -550,6 +550,9 @@ public class AudioSubtitleHelper {
                     TreeMap<Integer, Pair<MediaStream, Integer>> nativeSubtitleMerits = evaluateMediaStreams(mediaStreams, prefs, MediaStreamType.Subtitle, subtitleCode, true, false);
                     if (nativeSubtitleMerits.isEmpty()) { // try native low quality subs
                         nativeSubtitleMerits = evaluateMediaStreams(mediaStreams, prefs, MediaStreamType.Subtitle, subtitleCode, true, true);
+                    }
+                    if (nativeSubtitleMerits.isEmpty()) { // try native forced (wrongly tagged forced subs)
+                        nativeSubtitleMerits = evaluateMediaStreams(mediaStreams, prefs, MediaStreamType.Subtitle, subtitleCode, false, true);
                     }
                     if (!nativeSubtitleMerits.isEmpty()) {
                         subIdx = nativeSubtitleMerits.lastEntry().getValue(); // found native subtitle
