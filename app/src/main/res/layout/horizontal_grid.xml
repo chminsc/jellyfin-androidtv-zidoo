@@ -1,11 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.leanback.widget.HorizontalGridView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent" android:layout_height="match_parent"
-    android:id="@+id/horizontal_grid"
-    android:layout_gravity="center"
+<androidx.leanback.widget.HorizontalGridView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
 
-    android:clipToPadding="false"
-    focusOutFront="true"
-    android:padding="20dp">
+    tools:listitem="@layout/view_card_legacy_image"
+    tools:itemCount="3"
+    tools:layout_height="300dp"
+
+    android:id="@+id/horizontal_grid"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+
+    app:focusOutFront="true"
+    android:verticalSpacing="0dp"
+    android:horizontalSpacing="0dp"
+    android:padding="0dp"
+    >
 
 </androidx.leanback.widget.HorizontalGridView>
