@@ -1,7 +1,7 @@
 package org.jellyfin.androidtv.ui.playback;
 
-import static org.jellyfin.androidtv.ui.AudioSubtitleHelper.getAbsoluteAudioSubIdxSafe;
-import static org.jellyfin.androidtv.ui.AudioSubtitleHelper.getBestAudioSubtitleIdx;
+import static org.jellyfin.androidtv.util.AudioSubtitleHelper.getAbsoluteAudioSubIdxSafe;
+import static org.jellyfin.androidtv.util.AudioSubtitleHelper.getBestAudioSubtitleIdx;
 import static org.jellyfin.androidtv.util.Utils.RUNTIME_TICKS_TO_MS;
 import static org.jellyfin.androidtv.util.Utils.getMillisecondsFormated;
 import static org.jellyfin.androidtv.util.Utils.isEmpty;
@@ -22,13 +22,11 @@ import android.os.Handler;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.util.Pair;
 import androidx.fragment.app.FragmentActivity;
 
 import org.jellyfin.androidtv.R;
 import org.jellyfin.androidtv.auth.repository.UserRepository;
-import org.jellyfin.androidtv.constant.Codec;
 import org.jellyfin.androidtv.data.compat.PlaybackException;
 import org.jellyfin.androidtv.data.compat.StreamInfo;
 import org.jellyfin.androidtv.data.compat.VideoOptions;
@@ -40,9 +38,9 @@ import org.jellyfin.androidtv.preference.constant.AudioCodecOut;
 import org.jellyfin.androidtv.preference.constant.LanguagesAudio;
 import org.jellyfin.androidtv.preference.constant.NextUpBehavior;
 import org.jellyfin.androidtv.preference.constant.PreferredVideoPlayer;
-import org.jellyfin.androidtv.ui.AudioSubtitleHelper;
-import org.jellyfin.androidtv.ui.itemhandling.BaseRowItem;
 import org.jellyfin.androidtv.ui.playback.nextup.NextUpActivity;
+import org.jellyfin.androidtv.util.AudioSubtitleHelper;
+import org.jellyfin.androidtv.util.DeviceUtils;
 import org.jellyfin.androidtv.util.ImageHelper;
 import org.jellyfin.androidtv.util.Utils;
 import org.jellyfin.androidtv.util.apiclient.BaseItemUtils;
@@ -62,7 +60,6 @@ import org.jellyfin.sdk.model.api.ImageFormat;
 import org.jellyfin.sdk.model.api.ImageType;
 import org.koin.java.KoinJavaComponent;
 
-import java.io.File;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -93,8 +90,7 @@ public class ExternalPlayerActivity extends FragmentActivity {
     boolean isLiveTv;
     boolean noPlayerError;
     boolean mUseSendPath = false;
-    boolean mUseLegacySendPath = false;
-    boolean mEnableSurroundCodecs = false;
+    boolean mForceCompliantSurroundCodecs = false;
     boolean mAllowTranscoding = false;
     boolean mIsLibraryAudioPref = false;
     ZidooPlayerProfile mZidooProfile;
@@ -158,6 +154,7 @@ public class ExternalPlayerActivity extends FragmentActivity {
     static final String API_ZIDOO_PLAY_USE_RT_MEDIA_PLAYER = "MEDIA_BROWSER_USE_RT_MEDIA_PLAYER";
     static final String API_ZIDOO_TITLE = "title";
     static final String API_ZIDOO_LOADING_IMAGE = "loading_image";
+    static final String API_ZIDOO_CLEARLOGO_IMAGE = "clearlogo_image";
     static final String API_ZIDOO_TITLE_SUB_SEARCH = "subtitle_search_tilte";
     static final String API_ZIDOO_SEEK_POSITION = "position";
     static final String API_ZIDOO_DURATION = "duration";
@@ -187,9 +184,8 @@ public class ExternalPlayerActivity extends FragmentActivity {
         mVersionSourceId = getIntent().getStringExtra("VersionId"); // handle source Versions
 
         mUseSendPath = userPreferences.getValue().get(UserPreferences.Companion.getExternalVideoPlayerSendPath());
-        mUseLegacySendPath = userPreferences.getValue().get(UserPreferences.Companion.getUseLegacySendPath()); // for old FW ZDMC logic
         mAllowTranscoding = userPreferences.getValue().get(UserPreferences.Companion.getEnableTranscodingFallback());
-        mEnableSurroundCodecs = userPreferences.getValue().get(UserPreferences.Companion.getEnableExtraSurroundCodecs());
+        mForceCompliantSurroundCodecs = userPreferences.getValue().get(UserPreferences.Companion.getForceBitstreamCompliantSurroundCodecs());
 
         mPrefs = new AudioSubtitleHelper.AudioSubPref(userPreferences);
         // handle folder lib settings
@@ -208,13 +204,13 @@ public class ExternalPlayerActivity extends FragmentActivity {
             audioCodec = userPreferences.getValue().get(UserPreferences.Companion.getForcedAudioCodec()).getCodecName();
         }
         boolean forceStereo = false;
-        if (!mEnableSurroundCodecs) {
+        if (!mForceCompliantSurroundCodecs) {
             forceStereo = userPreferences.getValue().get(UserPreferences.Companion.getForceStereo());
         }
-        if (Codec.Audio.MP3.equals(audioCodec)) {
-            forceStereo = true;
-        }
-        mZidooProfile = new ZidooPlayerProfile(mPrefs.mHasDtsDecoder, mEnableSurroundCodecs, audioCodec, forceStereo ? 2 : null);
+//        if (Codec.Audio.MP3.equals(audioCodec)) {
+//            forceStereo = true;
+//        }
+        mZidooProfile = new ZidooPlayerProfile(mPrefs.mHasDtsDecoder, mForceCompliantSurroundCodecs, audioCodec, forceStereo ? 2 : null);
 
         Timber.d("onCreate audio <%s> sub <%s>", mPrefs.mAudioLangSetting, mPrefs.mSubtitleLangSetting);
 
@@ -613,13 +609,13 @@ public class ExternalPlayerActivity extends FragmentActivity {
         return info;
     }
 
-    private static final Pattern RegExTagPattern = Pattern.compile("TranscodeReasons=([0-9a-zA-z]*)");
+    private final Pattern RegExTranscodeReasonsPattern = Pattern.compile("TranscodeReasons=([0-9a-zA-z]*)");
 
     @NonNull
     private String getTranscodeReason() {
         String reason = "";
         try {
-            Matcher matcher = RegExTagPattern.matcher(mCurrentStreamInfo.getMediaUrl());
+            Matcher matcher = RegExTranscodeReasonsPattern.matcher(mCurrentStreamInfo.getMediaUrl());
             if (matcher.find()) {
                 String found = matcher.group(1);
                 if (isNonEmpty(found)) {
@@ -631,20 +627,14 @@ public class ExternalPlayerActivity extends FragmentActivity {
         return reason;
     }
 
-    private void showPlaybackInfoPopup() {
-        if (!userPreferences.getValue().get(UserPreferences.Companion.getShowZidooPlaybackPopup()))
+    private void showTranscodeInfoPopup() {
+        if (!userPreferences.getValue().get(UserPreferences.Companion.getShowTranscodePlaybackPopup()))
             return;
         if (mCurrentStreamInfo.getPlayMethod() == PlayMethod.Transcode) {
             Utils.showToast(ExternalPlayerActivity.this, String.format(Locale.US, "%s\n\n%s\n%s",
                     getDisplayTitle(),
                     mCurrentStreamInfo.getPlayMethod().toString(),
                     getTranscodeReason()
-                    )
-            );
-        } else {
-            Utils.showToast(ExternalPlayerActivity.this, String.format(Locale.US, "%s\n\n%s",
-                    getDisplayTitle(),
-                    mCurrentStreamInfo.getPlayMethod().toString()
                     )
             );
         }
@@ -656,12 +646,11 @@ public class ExternalPlayerActivity extends FragmentActivity {
             // build fake streamInfo so report logic can work
             mCurrentStreamInfo = buildStreamInfoSendPath();
             // Just pass the path directly
-            showPlaybackInfoPopup();
             Uri uri = getSendPathUri(mCurrentItem, mCurrentMediaSource);
-            if (mUseLegacySendPath) {
-                startExternalZidooZDMCActivity(uri);
-            } else {
+            if (DeviceUtils.hasNewZidooApi()) {
                 startExternalZidooMovieActivityDirectPath(uri);
+            } else {
+                startExternalZidooZDMCActivity(uri);
             }
         } else {
             String orgLang = mTmdbTask != null ? mTmdbTask.getOriginalLanguage(mCurrentItem.getId(), mCurrentItem.getSeriesId()) : null;
@@ -677,15 +666,16 @@ public class ExternalPlayerActivity extends FragmentActivity {
                         mCurrentStreamInfo = response;
                         mCurrentMediaSource = response.getMediaSource();
 
-                        showPlaybackInfoPopup();
+                        showTranscodeInfoPopup();
                         if (mUseSendPath && mCurrentStreamInfo.getPlayMethod() == PlayMethod.DirectPlay) {
                             Uri uri = getSendPathUri(mCurrentItem, mCurrentMediaSource);
-                            if (mUseLegacySendPath) {
-                                startExternalZidooZDMCActivity(uri);
-                            } else {
+                            if (DeviceUtils.hasNewZidooApi()) {
                                 startExternalZidooMovieActivityDirectPath(uri);
+                            } else {
+                                startExternalZidooZDMCActivity(uri);
                             }
                         } else {
+                            Timber.i("URI: %s",Uri.parse(mCurrentStreamInfo.getMediaUrl()).normalizeScheme());
                             startExternalZidooMovieActivity(Uri.parse(mCurrentStreamInfo.getMediaUrl()).normalizeScheme());
                         }
                     }
@@ -696,15 +686,9 @@ public class ExternalPlayerActivity extends FragmentActivity {
                     Timber.e(exception, "onError getting playback stream info");
                     if (exception instanceof PlaybackException) {
                         switch (((PlaybackException) exception).getErrorCode()) {
-                            case NotAllowed:
-                                Utils.showToast(ExternalPlayerActivity.this, getString(R.string.msg_playback_not_allowed));
-                                break;
-                            case NoCompatibleStream:
-                                Utils.showToast(ExternalPlayerActivity.this, getString(R.string.msg_playback_incompatible));
-                                break;
-                            case RateLimitExceeded:
-                                Utils.showToast(ExternalPlayerActivity.this, getString(R.string.msg_playback_restricted));
-                                break;
+                            case NotAllowed -> Utils.showToast(ExternalPlayerActivity.this, getString(R.string.msg_playback_not_allowed));
+                            case NoCompatibleStream -> Utils.showToast(ExternalPlayerActivity.this, getString(R.string.msg_playback_incompatible));
+                            case RateLimitExceeded -> Utils.showToast(ExternalPlayerActivity.this, getString(R.string.msg_playback_restricted));
                         }
                     }
                     finish();
@@ -894,26 +878,32 @@ public class ExternalPlayerActivity extends FragmentActivity {
             finish();
             return;
         }
-        new MountTask(this, pathUri, new Response<>() {
-            @Override
-            public void onResponse(String response) {
-                if (response != null) {
-                    Timber.i("MountTask successfully with Path <%s>", response);
-                    try {
-                        Uri uri = Uri.fromFile(new File(response));
-                        startExternalZidooMovieActivity(uri);
-                    } catch (Exception e) {
-                        Timber.e("Error could not get Uri.fromFile <%s>", response);
-                        e.printStackTrace();
-                        finish();
-                    }
-                } else {
-                    Timber.e("Error could not mount Path <%s>", pathUri.toString());
-                    Utils.showToast(ExternalPlayerActivity.this, "Error: Could not mount path!");
-                    finish();
-                }
-            }
-        });
+
+        if ("nfs".equals(pathUri.getScheme())) {
+            pathUri = Uri.parse(pathUri.toString().replace("/:", "")).normalizeScheme(); // fix Uri
+        }
+        startExternalZidooMovieActivity(pathUri);
+
+//        new MountTask(this, pathUri, new Response<>() {
+//            @Override
+//            public void onResponse(String response) {
+//                if (response != null) {
+//                    Timber.i("MountTask successfully with Path <%s>", response);
+//                    try {
+//                        Uri uri = Uri.fromFile(new File(response));
+//                        startExternalZidooMovieActivity(uri);
+//                    } catch (Exception e) {
+//                        Timber.e("Error could not get Uri.fromFile <%s>", response);
+//                        e.printStackTrace();
+//                        finish();
+//                    }
+//                } else {
+//                    Timber.e("Error could not mount Path <%s>", pathUri.toString());
+//                    Utils.showToast(ExternalPlayerActivity.this, "Error: Could not mount path!");
+//                    finish();
+//                }
+//            }
+//        });
     }
 
     private void startExternalZidooMovieActivity(@NonNull Uri pathUri) {
@@ -927,18 +917,21 @@ public class ExternalPlayerActivity extends FragmentActivity {
         zidooIntent.setClassName(API_ZIDOO_PACKAGE, API_ZIDOO_ACTIVITY_NAME_MOVIE);
 
         // add loading background
-        String imageUrl = KoinJavaComponent.<ImageHelper>get(ImageHelper.class).getImageUrl(ModelCompat.asSdk(mCurrentItem), ImageType.BACKDROP, ImageFormat.WEBP,16, mBackdropHeight);
-        if (isNonEmptyTrim(imageUrl)) {
-            zidooIntent.putExtra(API_ZIDOO_LOADING_IMAGE, imageUrl);
+        zidooIntent.putExtra(API_ZIDOO_LOADING_IMAGE, KoinJavaComponent.<ImageHelper>get(ImageHelper.class).getImageUrl(ModelCompat.asSdk(mCurrentItem), ImageType.BACKDROP, ImageFormat.WEBP,16, mBackdropHeight));
+        String logoUrl = KoinJavaComponent.<ImageHelper>get(ImageHelper.class).getImageUrl(ModelCompat.asSdk(mCurrentItem), ImageType.LOGO, true, null, null, true, true, true);
+        if (logoUrl != null) {
+            zidooIntent.putExtra(API_ZIDOO_CLEARLOGO_IMAGE, logoUrl);
         }
         String full_title = getDisplayTitle();
         if (full_title != null) {
             zidooIntent.putExtra(API_ZIDOO_TITLE, full_title);
         }
-//        mSeekPosition = 2 * (1000 * 60);
+
         if (mSeekPosition > 0) {
             zidooIntent.putExtra(API_ZIDOO_FROM_START, false);
             zidooIntent.putExtra(API_ZIDOO_SEEK_POSITION, mSeekPosition);
+        } else {
+            zidooIntent.putExtra(API_ZIDOO_FROM_START, true);
         }
         if (mPrefs.mAudioLangSetting != LanguagesAudio.DEVICE) {
             String orgLang = mTmdbTask != null ? mTmdbTask.getOriginalLanguage(mCurrentItem.getId(), mCurrentItem.getSeriesId()) : null;
@@ -955,10 +948,6 @@ public class ExternalPlayerActivity extends FragmentActivity {
             }
         }
         zidooIntent.putExtra(API_ZIDOO_RETURN_RESULT, true);
-//        zidooIntent.putExtra(API_ZIDOO_SOURCEFROM, API_ZIDOO_SOURCEFROM_LOCAL); // still needed for old FW?
-//        zidooIntent.putExtra(API_ZIDOO_PLAY_BROADCAST_STATUS, false);
-//        zidooIntent.putExtra(API_ZIDOO_PLAYMODEL, 5); // >= 0 isStream only = no overlay/menus!
-//        zidooIntent.putExtra(API_ZIDOO_PLAY_USE_RT_MEDIA_PLAYER, true);
 
         String container = mCurrentStreamInfo.getContainer();
         zidooIntent.setDataAndType(pathUri, "video/" + container);
