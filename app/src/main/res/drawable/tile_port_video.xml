@@ -10,9 +10,10 @@
     </item>
 
     <item
-        android:bottom="124dp"
         android:drawable="@drawable/ic_clapperboard"
         android:left="60dp"
         android:right="60dp"
-        android:top="124dp" />
+        android:top="124dp"
+        android:bottom="124dp"
+        />
 </layer-list>
