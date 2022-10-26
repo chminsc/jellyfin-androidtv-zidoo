@@ -3,32 +3,36 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginTop="7dp"
-    android:layout_marginEnd="8dp"
-    android:gravity="center_vertical"
-    android:orientation="horizontal">
+    android:layout_height="match_parent"
+    android:gravity="start|center_vertical"
+    android:layout_gravity="top|end"
+    tools:layout_height="90dp">
 
     <org.jellyfin.androidtv.ui.AsyncImageView
         android:id="@+id/clock_user_image"
-        android:layout_width="41dp"
-        android:layout_height="41dp"
-        android:padding="4dp"
-        app:circleCrop="true"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:alpha="0.9"
+        android:scaleType="center"
+        app:cropTypeGlide="circle_crop"
+        android:adjustViewBounds="true"
         tools:src="@drawable/ic_user" />
 
     <TextClock
         android:id="@+id/clock"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:fontFamily="sans-serif-light"
+        android:layout_marginStart="10dp"
+        android:textColor="?android:attr/textColorSecondary"
         android:format12Hour="h:mm"
         android:format24Hour="k:mm"
-        android:paddingStart="24dp"
         android:shadowColor="@color/black"
         android:shadowRadius="4"
-        android:textColor="@color/white"
+        android:maxLines="1"
         android:textSize="20sp"
+        android:maxLength="8"
+        android:includeFontPadding="false"
         tools:ignore="RtlSymmetry"
         tools:text="13:37" />
+
 </LinearLayout>
