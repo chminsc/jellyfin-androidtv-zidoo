@@ -8,6 +8,7 @@ import android.view.KeyEvent;
 
 import androidx.leanback.app.RowsSupportFragment;
 import androidx.leanback.widget.ArrayObjectAdapter;
+import androidx.leanback.widget.ClassPresenterSelector;
 import androidx.leanback.widget.HeaderItem;
 import androidx.leanback.widget.ListRow;
 import androidx.leanback.widget.OnItemViewClickedListener;
@@ -17,25 +18,28 @@ import androidx.leanback.widget.Row;
 import androidx.leanback.widget.RowPresenter;
 
 import org.jellyfin.androidtv.constant.CustomMessage;
-import org.jellyfin.androidtv.constant.QueryType;
 import org.jellyfin.androidtv.data.model.DataRefreshService;
-import org.jellyfin.androidtv.data.querying.ViewQuery;
 import org.jellyfin.androidtv.data.service.BackgroundService;
+import org.jellyfin.androidtv.preference.UserPreferences;
 import org.jellyfin.androidtv.ui.itemhandling.BaseRowItem;
 import org.jellyfin.androidtv.ui.itemhandling.ItemLauncher;
 import org.jellyfin.androidtv.ui.itemhandling.ItemRowAdapter;
 import org.jellyfin.androidtv.ui.presentation.CardPresenter;
-import org.jellyfin.androidtv.ui.presentation.PositionableListRowPresenter;
 import org.jellyfin.androidtv.ui.shared.BaseActivity;
 import org.jellyfin.androidtv.ui.shared.KeyListener;
 import org.jellyfin.androidtv.ui.shared.MessageListener;
 import org.jellyfin.androidtv.util.KeyProcessor;
+import org.jellyfin.androidtv.util.LayoutHelper;
+import org.jellyfin.androidtv.util.sdk.compat.ModelCompat;
 import org.jellyfin.apiclient.interaction.EmptyResponse;
 import org.jellyfin.apiclient.model.dto.BaseItemType;
+import org.jellyfin.sdk.model.api.BaseItemDto;
 import org.koin.java.KoinJavaComponent;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import kotlin.Lazy;
 import timber.log.Timber;
@@ -51,7 +55,10 @@ public class StdRowsFragment extends RowsSupportFragment implements RowLoader {
     protected CardPresenter mCardPresenter;
     protected boolean justLoaded = true;
 
+    protected Set<BaseRowItem> mLoadCache = new HashSet<>(50);
+
     private Lazy<BackgroundService> backgroundService = inject(BackgroundService.class);
+    private Lazy<UserPreferences> userPreferences = inject(UserPreferences.class);
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -89,7 +96,6 @@ public class StdRowsFragment extends RowsSupportFragment implements RowLoader {
                 refreshCurrentItem();
                 refreshRows();
             }
-
         } else {
             justLoaded = false;
         }
@@ -112,7 +118,8 @@ public class StdRowsFragment extends RowsSupportFragment implements RowLoader {
     }
 
     public void loadRows(List<BrowseRowDef> rows) {
-        mRowsAdapter = new ArrayObjectAdapter(new PositionableListRowPresenter());
+        ClassPresenterSelector rowPS = LayoutHelper.INSTANCE.buildDefaultRowPresenterSelector(null, 0);
+        mRowsAdapter = new ArrayObjectAdapter(rowPS);
         mCardPresenter = new CardPresenter();
 
         for (BrowseRowDef def : rows) {
@@ -127,7 +134,6 @@ public class StdRowsFragment extends RowsSupportFragment implements RowLoader {
         }
 
         addAdditionalRows(mRowsAdapter);
-
         setAdapter(mRowsAdapter);
     }
 
@@ -197,9 +203,8 @@ public class StdRowsFragment extends RowsSupportFragment implements RowLoader {
         public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
                                    RowPresenter.ViewHolder rowViewHolder, Row row) {
 
-            if (!(item instanceof BaseRowItem)) {
+            if (!(item instanceof BaseRowItem rowItem)) {
                 mCurrentItem = null;
-                //fill in default background
                 backgroundService.getValue().clearBackgrounds();
                 return;
             } else {
@@ -207,14 +212,27 @@ public class StdRowsFragment extends RowsSupportFragment implements RowLoader {
             }
 
             mCurrentRow = (ListRow) row;
-            BaseRowItem rowItem = (BaseRowItem) item;
-
-            if (((ListRow) row).getAdapter() instanceof ItemRowAdapter) {
-                ItemRowAdapter adapter = (ItemRowAdapter) ((ListRow) row).getAdapter();
+            if (((ListRow) row).getAdapter() instanceof ItemRowAdapter adapter) {
                 adapter.loadMoreItemsIfNeeded(rowItem.getIndex());
+//                preLoadRowBackdrops(mCurrentRow, rowItem.getIndex(), 3); // TODO needs more work
             }
-
             backgroundService.getValue().setBackground(rowItem.getBaseItem());
+        }
+    }
+
+    public void preLoadRowBackdrops(ListRow row, int startIdx, int itemRange) {
+        if (row != null && row.getAdapter() instanceof ItemRowAdapter adapter) {
+            List<Object> objects = adapter.unmodifiableList();
+            List<Object> subObjects = objects.subList(Math.max(startIdx - itemRange, 0), Math.min(startIdx + itemRange, objects.size()));
+            List<BaseItemDto> itemList = new ArrayList<>();
+            for (var it : subObjects) {
+                var itItem = (BaseRowItem) it;
+                if (itItem.getBaseItem() != null) {
+                    itemList.add(ModelCompat.asSdk(itItem.getBaseItem()));
+                }
+            }
+            if (!itemList.isEmpty())
+                backgroundService.getValue().preLoadBackgrounds(itemList);
         }
     }
 }
