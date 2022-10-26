@@ -4,11 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import androidx.work.BackoffPolicy
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.await
+import androidx.work.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -23,8 +19,15 @@ import java.util.concurrent.TimeUnit
 
 @Suppress("unused")
 class JellyfinApplication : Application() {
+
+	companion object {
+		lateinit var appContext: Context
+	}
+
 	override fun onCreate() {
 		super.onCreate()
+
+		appContext = applicationContext
 
 		// Don't run in ACRA service
 		if (ACRA.isACRASenderServiceProcess()) return
@@ -32,6 +35,7 @@ class JellyfinApplication : Application() {
 		val notificationsRepository by inject<NotificationsRepository>()
 		notificationsRepository.addDefaultNotifications()
 	}
+
 
 	/**
 	 * Called from the StartupActivity when the user session is started.
@@ -61,7 +65,10 @@ class JellyfinApplication : Application() {
 
 		// Detect auto bitrate
 		// running in a different scope to prevent slow startups
-		ProcessLifecycleOwner.get().lifecycleScope.launch { autoBitrate.detect() }
+		ProcessLifecycleOwner.get().lifecycleScope.launch {
+//			JellyfinGlideModule.clearDiskCache()
+			autoBitrate.detect()
+		}
 	}
 
 	override fun attachBaseContext(base: Context?) {
