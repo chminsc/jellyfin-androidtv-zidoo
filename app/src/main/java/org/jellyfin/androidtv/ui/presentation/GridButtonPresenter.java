@@ -1,32 +1,25 @@
 package org.jellyfin.androidtv.ui.presentation;
 
-import android.content.res.Resources;
-import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 
-import androidx.annotation.ColorInt;
 import androidx.leanback.widget.Presenter;
 
-import org.jellyfin.androidtv.R;
+import org.jellyfin.androidtv.constant.CardInfoType;
 import org.jellyfin.androidtv.ui.GridButton;
 import org.jellyfin.androidtv.ui.card.LegacyImageCardView;
+import org.jellyfin.androidtv.util.ImageUtils;
 
 public class GridButtonPresenter extends Presenter {
-
-    private boolean mShowInfo = true;
-    private int mCardWidth = 220;
-    private int mCardHeight = 220;
+    private boolean mShowInfo;
 
     public GridButtonPresenter() {
-        super();
+        this(true);
     }
 
-    public GridButtonPresenter(boolean showinfo, int width, int height) {
-        this();
-        mShowInfo = showinfo;
-        mCardWidth = width;
-        mCardHeight = height;
+    public GridButtonPresenter(boolean showInfo) {
+        super();
+        mShowInfo = showInfo;
     }
 
     class ViewHolder extends Presenter.ViewHolder {
@@ -38,10 +31,10 @@ public class GridButtonPresenter extends Presenter {
             cardView = (LegacyImageCardView) view;
         }
 
-        public void setItem(GridButton m, int width, int height) {
-            gridButton = m;
-            cardView.setMainImageDimensions(width, height);
+        public void setItem(GridButton button) {
+            gridButton = button;
             cardView.getMainImageView().setImageResource(gridButton.getImageRes());
+            cardView.setTitleText(gridButton.getText());
         }
 
         public GridButton getItem() {
@@ -51,15 +44,8 @@ public class GridButtonPresenter extends Presenter {
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
-        LegacyImageCardView cardView = new LegacyImageCardView(parent.getContext(), mShowInfo);
-        cardView.setFocusable(true);
-        cardView.setFocusableInTouchMode(true);
-
-        TypedValue typedValue = new TypedValue();
-        Resources.Theme theme = parent.getContext().getTheme();
-        theme.resolveAttribute(R.attr.cardViewBackground, typedValue, true);
-        @ColorInt int color = typedValue.data;
-        cardView.setBackgroundColor(color);
+        LegacyImageCardView cardView = new LegacyImageCardView(parent.getContext(), mShowInfo ? CardInfoType.UNDER_MINI : CardInfoType.NO_INFO, parent);
+        cardView.setMainImageAspect(ImageUtils.ASPECT_RATIO_SQUARE);
 
         return new ViewHolder(cardView);
     }
@@ -70,9 +56,7 @@ public class GridButtonPresenter extends Presenter {
         GridButton gridItem = (GridButton) item;
 
         ViewHolder vh = (ViewHolder) viewHolder;
-        vh.setItem(gridItem, mCardWidth, mCardHeight);
-        vh.cardView.setTitleText(gridItem.getText());
-        vh.cardView.setOverlayText(gridItem.getText());
+        vh.setItem(gridItem);
     }
 
     @Override
