@@ -2,15 +2,12 @@ package org.jellyfin.androidtv.ui.shared;
 
 import android.view.KeyEvent;
 
-import androidx.fragment.app.FragmentActivity;
+import androidx.appcompat.app.AppCompatActivity;
 
 import org.jellyfin.androidtv.constant.CustomMessage;
 
-import kotlin.Deprecated;
-import kotlin.ReplaceWith;
-
 //@Deprecated(message = "Use FragmentActivity instead", replaceWith = @ReplaceWith(expression = "FragmentActivity", imports = {}))
-public abstract class BaseActivity extends FragmentActivity {
+public abstract class BaseActivity extends AppCompatActivity {
     private KeyListener keyListener;
     private MessageListener messageListener;
 
