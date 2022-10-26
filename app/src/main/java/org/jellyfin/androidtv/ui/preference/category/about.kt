@@ -19,7 +19,7 @@ fun OptionsScreen.aboutCategory() = category {
 
 	link {
 		setTitle(R.string.pref_device_model)
-		content = "${Build.MANUFACTURER} ${Build.MODEL}"
+		content = "${Build.MANUFACTURER} ${Build.MODEL} , Android: ${Build.VERSION.RELEASE}, API: ${Build.VERSION.SDK_INT}"
 		icon = R.drawable.ic_tv
 	}
 
