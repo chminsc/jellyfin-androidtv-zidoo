@@ -1,11 +1,11 @@
 package org.jellyfin.androidtv.ui.browsing
 
 import android.os.Bundle
-import androidx.fragment.app.FragmentActivity
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
 import androidx.fragment.app.replace
 
-class GroupedItemsActivity : FragmentActivity() {
+class GroupedItemsActivity : AppCompatActivity() {
 	private val groupingType get() = intent.extras?.getString(EXTRA_GROUPING_TYPE)?.let { GroupingType.valueOf(it) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
