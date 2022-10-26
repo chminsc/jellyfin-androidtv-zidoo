@@ -15,11 +15,11 @@ import com.bumptech.glide.RequestBuilder
 import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy
 import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
+import com.vanniktech.blurhash.BlurHash
 import kotlinx.coroutines.*
 import me.carleslc.kotlin.extensions.standard.*
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.ui.AsyncImageView.CropTypeGlide.Companion.applyCropOption
-import org.jellyfin.androidtv.util.BlurHashDecoder
 import org.jellyfin.androidtv.util.ImageHelper
 import org.jellyfin.androidtv.util.ImageUtils.*
 import kotlin.math.round
@@ -112,7 +112,7 @@ class AsyncImageView @JvmOverloads constructor(
 		blurAspectRatio: Double = 1.0,
 		blurResolution: Int = 32,
 	): BitmapDrawable? {
-		return BlurHashDecoder.decode(
+		return BlurHash.decode(
 			blurHash,
 			if (blurAspectRatio > 1) round(blurResolution * blurAspectRatio).toInt() else blurResolution,
 			if (blurAspectRatio >= 1) blurResolution else round(blurResolution / blurAspectRatio).toInt(),

@@ -189,6 +189,7 @@ dependencies {
 	implementation(libs.bundles.markwon)
 
 	// Image utility
+	implementation(libs.blurhash)
 	implementation(libs.glide.core)
 	ksp(libs.glide.ksp)
 	implementation(libs.kenburnsview)
