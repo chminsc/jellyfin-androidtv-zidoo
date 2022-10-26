@@ -9,7 +9,6 @@ import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -30,13 +29,15 @@ import androidx.leanback.widget.RowPresenter;
 import org.jellyfin.androidtv.R;
 import org.jellyfin.androidtv.constant.CustomMessage;
 import org.jellyfin.androidtv.constant.Extras;
+import org.jellyfin.androidtv.constant.ImageType;
 import org.jellyfin.androidtv.constant.LiveTvOption;
 import org.jellyfin.androidtv.constant.QueryType;
 import org.jellyfin.androidtv.data.model.DataRefreshService;
-import org.jellyfin.androidtv.data.querying.ViewQuery;
 import org.jellyfin.androidtv.data.service.BackgroundService;
 import org.jellyfin.androidtv.databinding.EnhancedDetailBrowseBinding;
+import org.jellyfin.androidtv.preference.UserSettingPreferences;
 import org.jellyfin.androidtv.ui.GridButton;
+import org.jellyfin.androidtv.ui.InfoRowView;
 import org.jellyfin.androidtv.ui.itemdetail.ItemListActivity;
 import org.jellyfin.androidtv.ui.itemhandling.BaseRowItem;
 import org.jellyfin.androidtv.ui.itemhandling.ItemLauncher;
@@ -45,13 +46,13 @@ import org.jellyfin.androidtv.ui.livetv.LiveTvGuideActivity;
 import org.jellyfin.androidtv.ui.playback.MediaManager;
 import org.jellyfin.androidtv.ui.presentation.CardPresenter;
 import org.jellyfin.androidtv.ui.presentation.GridButtonPresenter;
-import org.jellyfin.androidtv.ui.presentation.PositionableListRowPresenter;
 import org.jellyfin.androidtv.ui.shared.BaseActivity;
 import org.jellyfin.androidtv.ui.shared.KeyListener;
 import org.jellyfin.androidtv.ui.shared.MessageListener;
-import org.jellyfin.androidtv.util.InfoLayoutHelper;
 import org.jellyfin.androidtv.util.KeyProcessor;
+import org.jellyfin.androidtv.util.LayoutHelper;
 import org.jellyfin.androidtv.util.MarkdownRenderer;
+import org.jellyfin.androidtv.util.ThumbListRow;
 import org.jellyfin.androidtv.util.sdk.compat.ModelCompat;
 import org.jellyfin.apiclient.interaction.EmptyResponse;
 import org.jellyfin.apiclient.model.dto.BaseItemDto;
@@ -66,12 +67,13 @@ import java.util.UUID;
 
 import kotlin.Lazy;
 import kotlinx.serialization.json.Json;
+import timber.log.Timber;
 
 public class EnhancedBrowseFragment extends Fragment implements RowLoader {
     protected FragmentActivity mActivity;
 
     protected TextView mTitle;
-    private LinearLayout mInfoRow;
+    private InfoRowView mInfoRow;
     private TextView mSummary;
 
     protected static final int BY_LETTER = 0;
@@ -119,12 +121,11 @@ public class EnhancedBrowseFragment extends Fragment implements RowLoader {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         EnhancedDetailBrowseBinding binding = EnhancedDetailBrowseBinding.inflate(inflater, container, false);
+        mTitle = binding.title;
+        mSummary = binding.summary;
+        mInfoRow = binding.infoRow;
 
         mActivity = getActivity();
-
-        mTitle = binding.title;
-        mInfoRow = binding.infoRow;
-        mSummary = binding.summary;
 
         // Inject the RowsSupportFragment in the results container
         if (getChildFragmentManager().findFragmentById(R.id.rowsFragment) == null) {
@@ -137,8 +138,8 @@ public class EnhancedBrowseFragment extends Fragment implements RowLoader {
                     .findFragmentById(R.id.rowsFragment);
         }
 
-        mRowsAdapter = new ArrayObjectAdapter(new PositionableListRowPresenter());
-        mRowsFragment.setAdapter(mRowsAdapter);
+        if (mRowsFragment != null)
+            mRowsFragment.setAlignment(LayoutHelper.INSTANCE.getDefaultRowHeights().getSecond());
 
         return binding.getRoot();
     }
@@ -219,25 +220,45 @@ public class EnhancedBrowseFragment extends Fragment implements RowLoader {
     }
 
     public void loadRows(List<BrowseRowDef> rows) {
-        mRowsAdapter = new ArrayObjectAdapter(new PositionableListRowPresenter());
-        mCardPresenter = new CardPresenter(false, 280);
+        ClassPresenterSelector rowPS = LayoutHelper.INSTANCE.buildDefaultRowPresenterSelector(null, 0);
+        mRowsAdapter = new ArrayObjectAdapter(rowPS);
+        mCardPresenter = new CardPresenter();
+        mCardPresenter.setAllowBackdropFallback(true);
+        boolean seriesThumbEnabled = KoinJavaComponent.<UserSettingPreferences>get(UserSettingPreferences.class).get(UserSettingPreferences.Companion.getSeriesThumbnailsEnabled());
+        mCardPresenter.setAllowParentFallback(seriesThumbEnabled);
+        mCardPresenter.setPreferSeasonForEpisodes(seriesThumbEnabled);
+        mCardPresenter.setPreferSeriesForEpisodes(seriesThumbEnabled);
+
+        var latestCardPresenter = new CardPresenter(mCardPresenter);
+        latestCardPresenter.mImageType = ImageType.POSTER;
+
         ClassPresenterSelector ps = new ClassPresenterSelector();
         ps.addClassPresenter(BaseRowItem.class, mCardPresenter);
-        ps.addClassPresenter(GridButton.class, new GridButtonPresenter(false, 310, 280));
+        ps.addClassPresenter(GridButton.class, new GridButtonPresenter(false));
 
         for (BrowseRowDef def : rows) {
+            Timber.d("Def: <%s>", def.getQueryType().toString());
             HeaderItem header = new HeaderItem(def.getHeaderText());
-            ItemRowAdapter rowAdapter = ItemRowAdapter.buildItemRowAdapter(requireContext(), def, mCardPresenter, ps, mRowsAdapter);
+            ItemRowAdapter rowAdapter;
+            if (QueryType.LatestItems.equals(def.getQueryType())) {
+                rowAdapter = ItemRowAdapter.buildItemRowAdapter(requireContext(), def, latestCardPresenter, mRowsAdapter);
+            } else {
+                rowAdapter = ItemRowAdapter.buildItemRowAdapter(requireContext(), def, mCardPresenter, ps, mRowsAdapter);
+            }
             rowAdapter.setReRetrieveTriggers(def.getChangeTriggers());
 
-            ListRow row = new ListRow(header, rowAdapter);
+            ListRow row;
+            if (QueryType.NextUp.equals(def.getQueryType())) {
+                row = new ThumbListRow(header, rowAdapter);
+            } else {
+                row = new ListRow(header, rowAdapter);
+            }
             mRowsAdapter.add(row);
             rowAdapter.setRow(row);
             rowAdapter.Retrieve();
         }
 
         addAdditionalRows(mRowsAdapter);
-
         mRowsFragment.setAdapter(mRowsAdapter);
     }
 
@@ -445,8 +466,9 @@ public class EnhancedBrowseFragment extends Fragment implements RowLoader {
 
             if (!(item instanceof BaseRowItem)) {
                 mTitle.setText(mFolder != null ? mFolder.getName() : "");
-                mInfoRow.removeAllViews();
                 mSummary.setText("");
+                mInfoRow.removeAllViews();
+                mInfoRow.setRowItem(null);
                 // Fill in default background
                 backgroundService.getValue().clearBackgrounds();
                 return;
@@ -456,15 +478,17 @@ public class EnhancedBrowseFragment extends Fragment implements RowLoader {
 
             mCurrentItem = rowItem;
             mCurrentRow = (ListRow) row;
-            mInfoRow.removeAllViews();
 
             mTitle.setText(rowItem.getName(requireContext()));
+            mInfoRow.setRowItem(mCurrentItem);
+            mInfoRow.setIncludeRuntime(true);
+            mInfoRow.setIncludeEndtime(true);
 
             String summary = rowItem.getSummary(requireContext());
-            if (summary != null) mSummary.setText(markdownRenderer.getValue().toMarkdownSpanned(summary));
-            else mSummary.setText(null);
-
-            InfoLayoutHelper.addInfoRow(requireContext(), rowItem, mInfoRow, true, true);
+            if (summary != null)
+                mSummary.setText(markdownRenderer.getValue().toMarkdownSpanned(summary));
+            else
+                mSummary.setText("");
 
             ItemRowAdapter adapter = (ItemRowAdapter) ((ListRow) row).getAdapter();
             adapter.loadMoreItemsIfNeeded(rowItem.getIndex());
