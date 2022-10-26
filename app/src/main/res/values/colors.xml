@@ -6,21 +6,37 @@
     <color name="indigo_dye">#033860</color>
     <color name="spanish_blue">#1E76BA</color>
     <color name="grey">#303030</color>
+    <color name="grey_dark">#202020</color>
     <color name="grey_light">#4b4b4b</color>
+    <color name="grey_mid">#808080</color>
     <color name="not_quite_black">#101010</color>
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
+    <color name="not_quite_white">#F4F4F4</color>
+    <color name="white_dim">#BFBFBF</color>
     <color name="red">#CC3333</color>
     <color name="transparent">#00000000</color>
+    <color name="silver">#C0C0C0</color>
+    <color name="silver_dark">#A5A5A5</color>
+    <color name="gold">#FFD700</color>
+    <color name="gold_dark">#B29400</color>
+    <color name="gold_light">#BFA639</color>
+    <color name="grey_orange">#99938E</color>
+    <color name="grey_aqua">#919997</color>
 
     <!-- Semi-Transparent Blacks -->
     <color name="black_transparent_dark">#E6000000</color>
     <color name="black_opaque">#AA000000</color>
     <color name="black_transparent">#97000000</color>
     <color name="black_transparent_light">#74000000</color>
+    <color name="not_quite_black_transparent">#C0101010</color>
 
     <!-- Progressbar Background -->
-    <color name="grey_transparent">#CC4b4b4b</color>
+    <color name="grey_light_transparent">#CC4b4b4b</color>
+    <color name="grey_stroke_transparent">#90303030</color>
+
+    <!-- Background's -->
+    <color name="grey_bg_transparent">#60707070</color>
 
     <!-- Gradients -->
     <color name="dark_green_gradient_start">#c306610a</color>
@@ -43,7 +59,7 @@
     <!-- button_default -->
     <color name="button_default_normal_background">#B3747474</color>
     <color name="button_default_disabled_background">#33747474</color>
-    <color name="button_default_highlight_background">#E6CCCCCC</color>
+    <color name="button_default_highlight_background">#E6DDDDDD</color>
     <color name="button_default_normal_text">#DDDDDD</color>
     <color name="button_default_disabled_text">#686868</color>
     <color name="button_default_highlight_text">#444444</color>
@@ -62,6 +78,12 @@
 
     <!-- Card Background Color -->
     <color name="lb_basic_card_info_bg_color">@color/grey</color>
-
     <color name="background_filter">#CC101010</color>
+    <!-- Parental Ratings Color -->
+    <color name="parental_rating_red">#D8121A</color>
+    <color name="parental_rating_green">#006835</color>
+    <color name="parental_rating_orange">#F15A24</color>
+    <color name="parental_rating_purple">#803D99</color>
+    <color name="parental_rating_blue">#1B3E9B</color>
+
 </resources>
