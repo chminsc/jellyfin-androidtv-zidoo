@@ -38,6 +38,7 @@ import org.jellyfin.androidtv.ui.ScrollViewListener;
 import org.jellyfin.androidtv.ui.preference.PreferencesActivity;
 import org.jellyfin.androidtv.ui.shared.BaseActivity;
 import org.jellyfin.androidtv.ui.shared.MessageListener;
+import org.jellyfin.androidtv.util.ImageHelper;
 import org.jellyfin.androidtv.util.ImageUtils;
 import org.jellyfin.androidtv.util.InfoLayoutHelper;
 import org.jellyfin.androidtv.util.TimeUtils;
@@ -774,7 +775,7 @@ public class LiveTvGuideActivity extends BaseActivity implements LiveTvGuide {
 
         if (mSelectedProgram.getId() != null) {
             mDisplayDate.setText(TimeUtils.getFriendlyDate(this, TimeUtils.convertToLocalDate(mSelectedProgram.getStartDate())));
-            String url = ImageUtils.getThumbImageUrl(mSelectedProgram, ImageUtils.MAX_PRIMARY_IMAGE_HEIGHT);
+            String url = ImageUtils.getThumbImageUrl(mSelectedProgram, ImageHelper.Companion.getMAX_PRIMARY_IMAGE_HEIGHT());
             if (Utils.isEmpty(url))
                 url = ImageUtils.getPrimaryImageUrl(mSelectedProgram);
             int imageSize = Utils.convertDpToPixel(this, 150);
