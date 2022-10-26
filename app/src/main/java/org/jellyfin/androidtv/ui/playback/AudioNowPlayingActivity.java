@@ -15,16 +15,15 @@ import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
 import androidx.leanback.app.RowsSupportFragment;
 import androidx.leanback.widget.ArrayObjectAdapter;
+import androidx.leanback.widget.ClassPresenterSelector;
 import androidx.leanback.widget.HeaderItem;
 import androidx.leanback.widget.ListRow;
 import androidx.leanback.widget.OnItemViewClickedListener;
-import androidx.leanback.widget.OnItemViewSelectedListener;
 import androidx.leanback.widget.Presenter;
 import androidx.leanback.widget.Row;
 import androidx.leanback.widget.RowPresenter;
@@ -32,6 +31,7 @@ import androidx.leanback.widget.RowPresenter;
 import org.jellyfin.androidtv.R;
 import org.jellyfin.androidtv.data.service.BackgroundService;
 import org.jellyfin.androidtv.databinding.ActivityAudioNowPlayingBinding;
+import org.jellyfin.androidtv.preference.UserPreferences;
 import org.jellyfin.androidtv.ui.AsyncImageView;
 import org.jellyfin.androidtv.ui.ClockUserView;
 import org.jellyfin.androidtv.ui.itemdetail.FullDetailsActivity;
@@ -41,6 +41,7 @@ import org.jellyfin.androidtv.ui.presentation.PositionableListRowPresenter;
 import org.jellyfin.androidtv.ui.shared.BaseActivity;
 import org.jellyfin.androidtv.util.ImageUtils;
 import org.jellyfin.androidtv.util.KeyProcessor;
+import org.jellyfin.androidtv.util.LayoutHelper;
 import org.jellyfin.androidtv.util.TimeUtils;
 import org.jellyfin.androidtv.util.Utils;
 import org.jellyfin.apiclient.model.dto.BaseItemDto;
@@ -51,6 +52,7 @@ import kotlin.Lazy;
 import timber.log.Timber;
 
 public class AudioNowPlayingActivity extends BaseActivity {
+    ActivityAudioNowPlayingBinding binding;
     private TextView mGenreRow;
     private ImageButton mPlayPauseButton;
     private ImageButton mNextButton;
@@ -61,8 +63,7 @@ public class AudioNowPlayingActivity extends BaseActivity {
     private ImageButton mArtistButton;
     private ImageButton mSaveButton;
     private ClockUserView mClock;
-    private TextView mCounter;
-    private ScrollView mScrollView;
+    private RelativeLayout mMainView;
     private ImageView mLogoImage;
 
     private RelativeLayout mSSArea;
@@ -85,7 +86,6 @@ public class AudioNowPlayingActivity extends BaseActivity {
     private int mCurrentDuration;
     private RowsSupportFragment mRowsFragment;
     private ArrayObjectAdapter mRowsAdapter;
-    private PositionableListRowPresenter mAudioQueuePresenter;
 
     private AudioNowPlayingActivity mActivity;
     private final Handler mLoopHandler = new Handler();
@@ -100,13 +100,14 @@ public class AudioNowPlayingActivity extends BaseActivity {
 
     private Lazy<BackgroundService> backgroundService = inject(BackgroundService.class);
     private Lazy<MediaManager> mediaManager = inject(MediaManager.class);
+    private Lazy<UserPreferences> userPreferences = inject(UserPreferences.class);
 
     private PopupMenu popupMenu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        ActivityAudioNowPlayingBinding binding = ActivityAudioNowPlayingBinding.inflate(getLayoutInflater());
+        binding = ActivityAudioNowPlayingBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
         lastUserInteraction = System.currentTimeMillis();
@@ -120,8 +121,7 @@ public class AudioNowPlayingActivity extends BaseActivity {
         mSongTitle = binding.song;
         mAlbumTitle = binding.album;
         mCurrentNdx = binding.track;
-        mScrollView = binding.mainScroller;
-        mCounter = binding.counter;
+        mMainView = binding.mainScroller;
         mLogoImage = binding.artistLogo;
 
         mSSArea = binding.ssInfoArea;
@@ -143,7 +143,6 @@ public class AudioNowPlayingActivity extends BaseActivity {
                 lastUserInteraction = System.currentTimeMillis();
             }
         });
-        mPlayPauseButton.setOnFocusChangeListener(mainAreaFocusListener);
 
         mPrevButton = binding.prevBtn;
         mPrevButton.setContentDescription(getString(R.string.lbl_prev_item));
@@ -158,7 +157,6 @@ public class AudioNowPlayingActivity extends BaseActivity {
                 lastUserInteraction = System.currentTimeMillis();
             }
         });
-        mPrevButton.setOnFocusChangeListener(mainAreaFocusListener);
 
         mNextButton = binding.nextBtn;
         mNextButton.setContentDescription(getString(R.string.lbl_next_item));
@@ -173,7 +171,6 @@ public class AudioNowPlayingActivity extends BaseActivity {
                 lastUserInteraction = System.currentTimeMillis();
             }
         });
-        mNextButton.setOnFocusChangeListener(mainAreaFocusListener);
 
         mRepeatButton = binding.repeatBtn;
         mRepeatButton.setContentDescription(getString(R.string.lbl_repeat));
@@ -189,7 +186,6 @@ public class AudioNowPlayingActivity extends BaseActivity {
                 lastUserInteraction = System.currentTimeMillis();
             }
         });
-        mRepeatButton.setOnFocusChangeListener(mainAreaFocusListener);
 
         mSaveButton = findViewById(R.id.saveBtn);
         mSaveButton.setContentDescription(getString(R.string.lbl_save_as_playlist));
@@ -204,7 +200,6 @@ public class AudioNowPlayingActivity extends BaseActivity {
                 lastUserInteraction = System.currentTimeMillis();
             }
         });
-        mSaveButton.setOnFocusChangeListener(mainAreaFocusListener);
 
         mShuffleButton = binding.shuffleBtn;
         mShuffleButton.setContentDescription(getString(R.string.lbl_shuffle_queue));
@@ -220,7 +215,6 @@ public class AudioNowPlayingActivity extends BaseActivity {
                 lastUserInteraction = System.currentTimeMillis();
             }
         });
-        mShuffleButton.setOnFocusChangeListener(mainAreaFocusListener);
 
         mAlbumButton = binding.albumBtn;
         mAlbumButton.setContentDescription(getString(R.string.lbl_open_album));
@@ -237,7 +231,6 @@ public class AudioNowPlayingActivity extends BaseActivity {
                 }
             }
         });
-        mAlbumButton.setOnFocusChangeListener(mainAreaFocusListener);
 
         mArtistButton = binding.artistBtn;
         mArtistButton.setContentDescription(getString(R.string.lbl_open_artist));
@@ -254,7 +247,6 @@ public class AudioNowPlayingActivity extends BaseActivity {
                 }
             }
         });
-        mArtistButton.setOnFocusChangeListener(mainAreaFocusListener);
 
         mCurrentProgress = binding.playerProgress;
         mCurrentPos = binding.currentPos;
@@ -268,9 +260,8 @@ public class AudioNowPlayingActivity extends BaseActivity {
         getSupportFragmentManager().beginTransaction().add(R.id.rowsFragment, mRowsFragment).commit();
 
         mRowsFragment.setOnItemViewClickedListener(new ItemViewClickedListener());
-        mRowsFragment.setOnItemViewSelectedListener(new ItemViewSelectedListener());
-        mAudioQueuePresenter = new PositionableListRowPresenter(10);
-        mRowsAdapter = new ArrayObjectAdapter(mAudioQueuePresenter);
+        ClassPresenterSelector rowPS = LayoutHelper.INSTANCE.buildDefaultRowPresenterSelector(null, 0);
+        mRowsAdapter = new ArrayObjectAdapter(rowPS);
         mRowsFragment.setAdapter(mRowsAdapter);
         addQueue();
 
@@ -370,8 +361,15 @@ public class AudioNowPlayingActivity extends BaseActivity {
                 startScreenSaver();
             } else {
                 setCurrentTime(pos);
-                if (mAudioQueuePresenter != null && !queueRowHasFocus && mAudioQueuePresenter.getPosition() != mediaManager.getValue().getCurrentAudioQueuePosition()) {
-                    mAudioQueuePresenter.setPosition(mediaManager.getValue().getCurrentAudioQueuePosition());
+                var item = mediaManager.getValue().getCurrentAudioItem();
+                if (item != null) {
+                    var presenters = mRowsAdapter.getPresenterSelector().getPresenters();
+                    if (presenters != null && presenters[0] instanceof PositionableListRowPresenter) {
+                        var presenter = (PositionableListRowPresenter) presenters[0];
+                        if (mMainView.hasFocus() && presenter.getPosition() != mediaManager.getValue().getCurrentAudioQueuePosition()) {
+                            presenter.setPositionSmooth(mediaManager.getValue().getCurrentAudioQueuePosition());
+                        }
+                    }
                 }
             }
         }
@@ -394,22 +392,6 @@ public class AudioNowPlayingActivity extends BaseActivity {
             dismissPopup();
             mRowsAdapter.remove(mQueueRow);
             addQueue();
-        }
-    };
-
-    private View.OnFocusChangeListener mainAreaFocusListener = new View.OnFocusChangeListener() {
-        @Override
-        public void onFocusChange(View v, boolean hasFocus) {
-            if (!hasFocus) {
-                // when the playback control buttons lose focus, the only other focusable object is the queue row.
-                // Scroll to the bottom of the scrollView
-                mScrollView.smoothScrollTo(0, mScrollView.getHeight() - 1);
-                queueRowHasFocus = true;
-                return;
-            }
-            queueRowHasFocus = false;
-            //scroll so entire main area is in view
-            mScrollView.smoothScrollTo(0, 0);
         }
     };
 
@@ -517,18 +499,6 @@ public class AudioNowPlayingActivity extends BaseActivity {
         }
     }
 
-    private final class ItemViewSelectedListener implements OnItemViewSelectedListener {
-        @Override
-        public void onItemSelected(Presenter.ViewHolder itemViewHolder, Object item,
-                                   RowPresenter.ViewHolder rowViewHolder, Row row) {
-
-            if (item instanceof BaseRowItem) {
-                //Keep counter
-                mCounter.setText(((BaseRowItem) item).getIndex() + 1 + " | " + mQueueRow.getAdapter().size());
-            }
-        }
-    }
-
     private void dismissPopup() {
         if (popupMenu != null) {
             popupMenu.dismiss();
@@ -542,9 +512,14 @@ public class AudioNowPlayingActivity extends BaseActivity {
         mArtistName.setAlpha(.3f);
         mGenreRow.setVisibility(View.INVISIBLE);
         mClock.setAlpha(.3f);
-        ObjectAnimator fadeOut = ObjectAnimator.ofFloat(mScrollView, "alpha", 1f, 0f);
+        mSSArea.setVisibility(View.VISIBLE);
+        ObjectAnimator fadeOut = ObjectAnimator.ofFloat(mMainView, "alpha", 1f, 0f);
         fadeOut.setDuration(1000);
         fadeOut.start();
+        fadeOut = ObjectAnimator.ofFloat(binding.rowsFragment, "alpha", 1f, 0f);
+        fadeOut.setDuration(1000);
+        fadeOut.start();
+
         ObjectAnimator fadeIn = ObjectAnimator.ofFloat(mSSArea, "alpha", 0f, 1f);
         fadeIn.setDuration(1000);
         fadeIn.start();
@@ -566,9 +541,13 @@ public class AudioNowPlayingActivity extends BaseActivity {
         ObjectAnimator fadeOut = ObjectAnimator.ofFloat(mSSArea, "alpha", 1f, 0f);
         fadeOut.setDuration(1000);
         fadeOut.start();
-        ObjectAnimator fadeIn = ObjectAnimator.ofFloat(mScrollView, "alpha", 0f, 1f);
+        ObjectAnimator fadeIn = ObjectAnimator.ofFloat(mMainView, "alpha", 0f, 1f);
         fadeIn.setDuration(1000);
         fadeIn.start();
+        fadeIn = ObjectAnimator.ofFloat(binding.rowsFragment, "alpha", 0f, 1f);
+        fadeIn.setDuration(1000);
+        fadeIn.start();
+        mSSArea.setVisibility(View.GONE);
         lastUserInteraction = System.currentTimeMillis();
         ssActive = false;
     }
