@@ -8,15 +8,11 @@ import static org.jellyfin.androidtv.util.ImageUtils.ASPECT_RATIO_THUMB;
 import static org.koin.java.KoinJavaComponent.inject;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.util.Pair;
-import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 
-import androidx.annotation.ColorInt;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
@@ -25,11 +21,11 @@ import androidx.lifecycle.LifecycleOwner;
 import androidx.lifecycle.ViewTreeLifecycleOwner;
 
 import org.jellyfin.androidtv.R;
+import org.jellyfin.androidtv.constant.CardInfoType;
 import org.jellyfin.androidtv.constant.ImageType;
 import org.jellyfin.androidtv.preference.UserPreferences;
 import org.jellyfin.androidtv.preference.constant.RatingType;
 import org.jellyfin.androidtv.preference.constant.WatchedIndicatorBehavior;
-import org.jellyfin.androidtv.ui.browsing.GenericGridActivity;
 import org.jellyfin.androidtv.ui.card.LegacyImageCardView;
 import org.jellyfin.androidtv.ui.itemhandling.BaseRowItem;
 import org.jellyfin.androidtv.util.ImageHelper;
@@ -41,13 +37,11 @@ import org.jellyfin.apiclient.model.dto.BaseItemDto;
 import org.jellyfin.apiclient.model.dto.BaseItemType;
 import org.jellyfin.apiclient.model.dto.UserItemDataDto;
 import org.jellyfin.apiclient.model.entities.LocationType;
-import org.jellyfin.sdk.model.api.BaseItemKind;
 import org.jellyfin.sdk.model.api.SearchHint;
 import org.koin.java.KoinJavaComponent;
 
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,15 +49,10 @@ import kotlin.Lazy;
 import timber.log.Timber;
 
 public class CardPresenter extends Presenter {
-    public static final int DEFAULT_STATIC_HEIGHT = 300;
+    public static final int DEFAULT_CARD_HEIGHT = 300;
+    public static final int MAX_CARD_HEIGHT = 700;
     public static final int MIN_CARD_WIDTH = 50;
     private static final ImageType DEFAULT_IMAGE_TYPE = ImageType.POSTER;
-
-    private static final HashMap<BaseItemType, Integer> test;
-    static {
-        test = new HashMap<>();
-        test.put(BaseItemType.Audio, R.drawable.tile_audio);
-    }
 
     // setup all none ASPECT_RATIO_POSTER default cases
     private static final HashMap<BaseRowItem.ItemType, Pair<ImageType, Double>> DEFAULT_ROW_TYPE_TO_IMAGE_MAP;
@@ -87,57 +76,59 @@ public class CardPresenter extends Presenter {
     private @NonNull HashMap<BaseRowItem.ItemType, Pair<ImageType, Double>> mRowItemTypeToImageMap = DEFAULT_ROW_TYPE_TO_IMAGE_MAP;
     private @NonNull HashMap<BaseItemType, Pair<ImageType, Double>> mBaseItemTypeToImageMap = DEFAULT_BASE_TYPE_TO_IMAGE_MAP;
 
-    private Integer mStaticHeight = null;
-    private ImageType mImageType = null;
-    private boolean mShowInfo = true;
-    private boolean mAllowParentFallback = false;
+    private Integer mStaticHeight;
+    public ImageType mImageType = null;
+    public Boolean mSquareAspect = null;
+    public CardInfoType mInfoType = null;
+    private RatingType mRatingType = null;
+    public boolean mAllowParentFallback = false;
     // only for Thumb/Banners
-    private boolean mAllowBackdropFallback = false;
+    public boolean mAllowBackdropFallback = false;
     // only for Episodes
-    private boolean mPreferSeriesForEpisodes = false;
-    private boolean mPreferSeasonForEpisodes = false; // if set takes priority over Series
+    public boolean mPreferSeriesForEpisodes = false;
+    public boolean mPreferSeasonForEpisodes = false; // if set takes priority over Series
 
     private final Lazy<ImageHelper> imageHelper = inject(ImageHelper.class);
 
     public CardPresenter() {
-        super();
+        this(CardInfoType.UNDER_FULL, DEFAULT_CARD_HEIGHT);
     }
 
     public CardPresenter(boolean showInfo) {
-        this();
-        mShowInfo = showInfo;
+        this(showInfo, DEFAULT_CARD_HEIGHT);
     }
 
     public CardPresenter(boolean showInfo, int staticHeight) {
-        this(showInfo);
-        mStaticHeight = staticHeight;
+        this(showInfo ? CardInfoType.UNDER_FULL : CardInfoType.NO_INFO, staticHeight);
+    }
+
+    public CardPresenter(CardInfoType infoType, Integer staticHeight) {
+        super();
+        mInfoType = infoType;
+        if (staticHeight != null && staticHeight > 0)
+            mStaticHeight = staticHeight;
     }
 
     public CardPresenter(@NonNull CardPresenter presenter) {
         this();
         mStaticHeight = presenter.mStaticHeight;
         mImageType = presenter.mImageType;
+        mSquareAspect = presenter.mSquareAspect;
         mRowItemTypeToImageMap = presenter.mRowItemTypeToImageMap != DEFAULT_ROW_TYPE_TO_IMAGE_MAP ? new HashMap<>(presenter.mRowItemTypeToImageMap) : DEFAULT_ROW_TYPE_TO_IMAGE_MAP;
         mBaseItemTypeToImageMap = presenter.mBaseItemTypeToImageMap != DEFAULT_BASE_TYPE_TO_IMAGE_MAP ? new HashMap<>(presenter.mBaseItemTypeToImageMap) : DEFAULT_BASE_TYPE_TO_IMAGE_MAP;
-        mShowInfo = presenter.mShowInfo;
+        mInfoType = presenter.mInfoType;
         mAllowParentFallback = presenter.mAllowParentFallback;
         mAllowBackdropFallback = presenter.mAllowBackdropFallback;
         mPreferSeriesForEpisodes = presenter.mPreferSeriesForEpisodes;
         mPreferSeasonForEpisodes = presenter.mPreferSeasonForEpisodes;
+        mRatingType = presenter.mRatingType;
     }
 
     class ViewHolder extends Presenter.ViewHolder {
         private static final int BLUR_RESOLUTION = 32;
-        private double CARD_FOCUS_SCALE = 1.15;
-        private final double CARD_SPACING_PCT = 1.0; // 100% means don't overlap with horizontal neighbors, which depends on the CARD_FOCUS_SCALE
-        private final double CARD_SPACING_HORIZONTAL_BANNER_PCT = 0.5; // allow 50% horizontal card overlapping for banners, otherwise spacing is too large
-        private final int CARD_SPACING_EXTRA_PIXEL = 2; // extra left/right spacing in pixels
-
-        private int cardWidth = 200;
-        private int cardHeight = 300;
 
         private BaseRowItem mItem;
-        private LegacyImageCardView mCardView;
+        private final LegacyImageCardView mCardView;
         private Drawable mDefaultCardImage;
         private final LifecycleOwner lifecycleOwner;
 
@@ -147,88 +138,34 @@ public class CardPresenter extends Presenter {
             mCardView = (LegacyImageCardView) view;
             mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_video);
             this.lifecycleOwner = lifecycleOwner;
-            if (mCardView != null)
-                CARD_FOCUS_SCALE = Math.max(mCardView.getContext().getResources().getFraction(R.fraction.card_scale_focus, 1, 1), 1.0);
         }
 
-        protected void setItem(BaseRowItem baseRowItem, double aspect) {
+        protected void setItem(@NonNull final BaseRowItem baseRowItem, double aspect) {
             mItem = baseRowItem;
+            Context context = mCardView.getContext();
+            mDefaultCardImage = mItem.getDefaultImage(context, aspect > 1.0);
             switch (mItem.getItemType()) {
-                case BaseItem:
+                case BaseItem -> {
                     BaseItemDto itemDto = mItem.getBaseItem();
-                    boolean showWatched = true;
+                    boolean showWatched = false;
                     boolean showProgress = false;
-                    switch (itemDto.getBaseItemType()) {
-                        case Audio:
-                        case MusicAlbum:
-                            mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_audio);
-                            showWatched = false;
-                            break;
-                        case Person:
-                            mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_person);
-                            break;
-                        case MusicArtist:
-                            mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_person);
-                            showWatched = false;
-                            break;
-                        case Season:
-                        case Series:
-                            mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_tv);
-                            break;
-                        case Episode:
-                            mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_land_tv);
-                            switch (itemDto.getLocationType()) {
-                                case FileSystem:
-                                    break;
-                                case Remote:
-                                    break;
-                                case Virtual:
-                                    mCardView.setBanner((itemDto.getPremiereDate() != null ? TimeUtils.convertToLocalDate(itemDto.getPremiereDate()) : new Date(System.currentTimeMillis() + 1)).getTime() > System.currentTimeMillis() ? R.drawable.banner_edge_future : R.drawable.banner_edge_missing);
-                                    break;
-                                case Offline:
-                                    mCardView.setBanner(R.drawable.banner_edge_offline);
-                                    break;
+                    if (mItem.getBaseItemType() != null) {
+                        switch (mItem.getBaseItemType()) {
+                            case Episode, Series, Season, Movie, Video, CollectionFolder, UserView, Folder, Genre -> {
+                                showWatched = true;
+                                showProgress = true;
                             }
-                            showProgress = true;
-                            break;
-                        case CollectionFolder:
-                        case UserView:
-                            mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_land_folder);
-                            break;
-                        case Folder:
-                        case Genre:
-                            mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_folder);
-                            break;
-                        case MusicGenre:
-                            mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_folder);
-                            showWatched = false;
-                            break;
-                        case Photo:
-                            mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_land_photo);
-                            showWatched = false;
-                            break;
-                        case PhotoAlbum:
-                        case Playlist:
-                            showWatched = false;
-                            mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_folder);
-                            break;
-                        case Movie:
-                        case Video:
-                            mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_video);
-                            showProgress = true;
-                            break;
-                        default:
-                            mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_video);
-                            break;
+                        }
                     }
-                    if (itemDto.getLocationType() == LocationType.Offline) {
+                    if (LocationType.Virtual.equals(itemDto.getLocationType())) {
+                        mCardView.setBanner((itemDto.getPremiereDate() != null ? TimeUtils.convertToLocalDate(itemDto.getPremiereDate()) : new Date(System.currentTimeMillis() + 1)).getTime() > System.currentTimeMillis() ? R.drawable.banner_edge_future : R.drawable.banner_edge_missing);
+                    } else if (LocationType.Offline.equals(itemDto.getLocationType())) {
                         mCardView.setBanner(R.drawable.banner_edge_offline);
-                    }
-                    if (itemDto.getIsPlaceHolder() != null && itemDto.getIsPlaceHolder()) {
+                    } else if (Utils.isTrue(itemDto.getIsPlaceHolder())) {
                         mCardView.setBanner(R.drawable.banner_edge_disc);
                     }
                     UserItemDataDto userData = itemDto.getUserData();
-                    if (showWatched && userData != null) {
+                    if (showWatched && userData != null && !mItem.isFolder()) {
                         WatchedIndicatorBehavior showIndicator = KoinJavaComponent.<UserPreferences>get(UserPreferences.class).get(UserPreferences.Companion.getWatchedIndicatorBehavior());
                         if (userData.getPlayed()) {
                             if (showIndicator != WatchedIndicatorBehavior.NEVER && (showIndicator != WatchedIndicatorBehavior.EPISODES_ONLY || itemDto.getBaseItemType() == BaseItemType.Episode))
@@ -242,63 +179,38 @@ public class CardPresenter extends Presenter {
                                 mCardView.setUnwatchedCount(-1);
                         }
                     }
-
                     if (showProgress && itemDto.getRunTimeTicks() != null && itemDto.getRunTimeTicks() > 0 && userData != null && userData.getPlaybackPositionTicks() > 0) {
                         mCardView.setProgress(((int) (userData.getPlaybackPositionTicks() * 100.0 / itemDto.getRunTimeTicks()))); // force floating pt math with 100.0
                     } else {
                         mCardView.setProgress(0);
                     }
-                    break;
-                case LiveTvChannel:
-                    // Channel logos should fit within the view
-                    mCardView.getMainImageView().setScaleType(ImageView.ScaleType.FIT_CENTER);
-                    mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_tv);
-                    break;
-                case LiveTvProgram:
+                }
+//                case LiveTvChannel ->
+//                        mCardView.getMainImageView().setScaleType(ImageView.ScaleType.FIT_CENTER); // Channel logos should fit within the view
+                case LiveTvProgram -> {
                     BaseItemDto program = mItem.getProgramInfo();
-                    switch (program.getLocationType()) {
-                        case FileSystem:
-                        case Remote:
-                        case Offline:
-                            break;
-                        case Virtual:
-                            if (program.getStartDate() != null && TimeUtils.convertToLocalDate(program.getStartDate()).getTime() > System.currentTimeMillis()) {
-                                mCardView.setBanner(R.drawable.banner_edge_future);
-                            }
-                            break;
+                    if (program.getLocationType() == LocationType.Virtual) {
+                        if (program.getStartDate() != null && TimeUtils.convertToLocalDate(program.getStartDate()).getTime() > System.currentTimeMillis()) {
+                            mCardView.setBanner(R.drawable.banner_edge_future);
+                        }
                     }
-                    mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_land_tv);
-                    break;
-                case LiveTvRecording:
-                    mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_tv);
-                    break;
-                case Person:
-                    mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_person);
-                    break;
-                case Chapter:
-                    mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_chapter);
-                    break;
-                case SearchHint:
-                    String type = mItem.getSearchHint().getType();
-                    if (BaseItemKind.EPISODE.getSerialName().equals(type)) {
-                        mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_tv);
-                    } else if (BaseItemKind.PERSON.getSerialName().equals(type)) {
-                        mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_person);
-                    } else {
-                        mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_video);
-                    }
-                    break;
-                case GridButton:
-                    mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_port_video);
-                    break;
-                case SeriesTimer:
-                    mDefaultCardImage = ContextCompat.getDrawable(mCardView.getContext(), R.drawable.tile_land_series_timer);
-                    break;
+                }
             }
-            cardHeight = (mStaticHeight != null && mStaticHeight > 0) ? mStaticHeight : DEFAULT_STATIC_HEIGHT;
-            cardWidth = (int) (aspect * cardHeight);
-            cardWidth = Math.max(cardWidth, MIN_CARD_WIDTH);
-            mCardView.setMainImageDimensions(cardWidth, cardHeight);
+            // set all other dynamic properties
+            String titleText = switch (mInfoType) {
+                case UNDER_FULL -> mItem.getBaseItemType() == BaseItemType.Episode ? mItem.getBaseItem().getSeriesName() : mItem.getName(context);
+                default -> mItem.getFullName(context);
+            };
+            mCardView.setTitleText(titleText);
+            mCardView.setContentText(mItem.getSubText(context));
+            mCardView.setFocusIcon(mItem);
+            mCardView.setInfoOverlayData(mItem);
+            mCardView.showFavIcon(mItem.isFavorite());
+            mCardView.setPlayingIndicator(mItem.isPlaying());
+            if (mInfoType == CardInfoType.NO_INFO && mItem.isFolder()) {
+                mCardView.setStatusBadge(ContextCompat.getDrawable(context, R.drawable.ic_folder_stroke_accent), mItem.getChildCountStr(), null);
+            }
+            mCardView.setRating(mItem, mRatingType != null ? mRatingType : KoinJavaComponent.<UserPreferences>get(UserPreferences.class).get(UserPreferences.Companion.getDefaultRatingType()));
         }
 
         public BaseRowItem getItem() {
@@ -308,34 +220,28 @@ public class CardPresenter extends Presenter {
         protected void updateCardViewImage(@Nullable String url, @Nullable String blurHash, double aspect) {
             mCardView.getMainImageView().load(url, blurHash, mDefaultCardImage, aspect, BLUR_RESOLUTION);
         }
+    }
 
-        protected void resetCardView() {
-            mCardView.clearBanner();
-            mCardView.setUnwatchedCount(-1);
-            mCardView.setProgress(0);
-            mCardView.setRating(null);
-            mCardView.setBadgeImage(null);
-            mCardView.getMainImageView().setImageDrawable(null);
-        }
+    @Override
+    public void onUnbindViewHolder(Presenter.ViewHolder viewHolder) {
+        ((ViewHolder) viewHolder).mCardView.resetCard();
     }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
-        LegacyImageCardView cardView = new LegacyImageCardView(parent.getContext(), mShowInfo);
-        cardView.setFocusable(true);
-        cardView.setFocusableInTouchMode(true);
+        LegacyImageCardView cardView = new LegacyImageCardView(parent.getContext(), mInfoType, parent);
+        cardView.setMainImageAspect(getDefaultAspect());
 
-        TypedValue typedValue = new TypedValue();
-        Resources.Theme theme = parent.getContext().getTheme();
-        theme.resolveAttribute(R.attr.cardViewBackground, typedValue, true);
-        @ColorInt int color = typedValue.data;
-        cardView.setBackgroundColor(color);
+        // preset dimensions, since early code may depend on it!
+//        Pair<Integer, Integer> cardHeightWidth = getCardHeightWidth(getDefaultAspect(), mStaticHeight != null ? mStaticHeight : DEFAULT_CARD_HEIGHT, null);
+//        cardView.setMainImageHeightWidth(cardHeightWidth.first, cardHeightWidth.second);
 
         return new ViewHolder(cardView, ViewTreeLifecycleOwner.get(parent));
     }
 
     @Override
     public void onBindViewHolder(Presenter.ViewHolder viewHolder, Object item) {
+//        Timber.d("onBindViewHolder()");
         if (!(item instanceof BaseRowItem)) {
             return;
         }
@@ -344,68 +250,78 @@ public class CardPresenter extends Presenter {
         if (!rowItem.isValid() || holder == null || holder.mCardView == null || holder.mCardView.getContext() == null) {
             return;
         }
-        Context context = holder.mCardView.getContext();
-//        holder.mCardView.setCardType(BaseCardView.CARD_TYPE_INFO_UNDER);
-
-        holder.mCardView.setTitleText(rowItem.getCardName(context));
-        holder.mCardView.setContentText(rowItem.getSubText(context));
-
+        // update aspect for auto types
         Pair<ImageType, Double> imageTypeAndAspect = getImageTypeAndAspect(rowItem);
+        holder.mCardView.setMainImageAspect(imageTypeAndAspect.second);
+        // set card properties
         holder.setItem(rowItem, imageTypeAndAspect.second);
-        if (ImageType.POSTER.equals(imageTypeAndAspect.first)) {
-            holder.mCardView.setOverlayInfo(rowItem);
-        }
 
-        holder.mCardView.showFavIcon(rowItem.isFavorite());
-        if (rowItem.isPlaying()) {
-            holder.mCardView.setPlayingIndicator(true);
-        } else {
-            holder.mCardView.setPlayingIndicator(false);
+        Pair<Integer, Integer> cardHeightWidth = getCardHeightWidth(imageTypeAndAspect.second, mStaticHeight != null ? mStaticHeight : DEFAULT_CARD_HEIGHT, null);
+//        holder.mCardView.setMainImageHeightWidth(cardHeightWidth.first, cardHeightWidth.second);
+        Context context = holder.mCardView.getContext();
 
-            if (KoinJavaComponent.<UserPreferences>get(UserPreferences.class).get(UserPreferences.Companion.getHideCardRatings())) {
-                holder.mCardView.setRating(null);
-                holder.mCardView.setBadgeImage(null);
-            } else if (rowItem.getBaseItem() != null && rowItem.getBaseItemType() != BaseItemType.UserView) {
-                RatingType ratingType = KoinJavaComponent.<UserPreferences>get(UserPreferences.class).get(UserPreferences.Companion.getDefaultRatingType());
-                if (ratingType == RatingType.RATING_TOMATOES) {
-                    Drawable badge = rowItem.getBadgeImage(context);
-                    holder.mCardView.setRating(null);
-                    if (badge != null) {
-                        holder.mCardView.setBadgeImage(badge);
-                    }
-                } else if (ratingType == RatingType.RATING_STARS && rowItem.getBaseItem().getCommunityRating() != null) {
-                    holder.mCardView.setBadgeImage(ContextCompat.getDrawable(context, R.drawable.ic_star));
-                    holder.mCardView.setRating(String.format(Locale.US, "%.1f", rowItem.getBaseItem().getCommunityRating()));
-                }
-            }
-        }
-
-        // auto adapt horizontal container padding to fit scaling (prevent overlap + adapt to actual size)
-        if (!(context instanceof GenericGridActivity)) { // Grid's have there own space handling
-            double cardScaleingH = (holder.CARD_FOCUS_SCALE - 1.0) * holder.CARD_SPACING_PCT;
-            if (imageTypeAndAspect.first == ImageType.BANNER) {
-                cardScaleingH = (holder.CARD_FOCUS_SCALE - 1.0) * holder.CARD_SPACING_HORIZONTAL_BANNER_PCT;
-            }
-            cardScaleingH = Math.max(cardScaleingH, 0.0);
-            int spaceingH = (int) ((holder.cardWidth * cardScaleingH) / 4.0) + holder.CARD_SPACING_EXTRA_PIXEL;
-            holder.mCardView.setPadding(spaceingH, holder.mCardView.getPaddingTop(), spaceingH, holder.mCardView.getPaddingBottom());
-        }
-
-        Pair<String, org.jellyfin.apiclient.model.entities.ImageType> imageUrlAndType = getImageUrl(context, rowItem, imageTypeAndAspect.first, holder.cardHeight);
+        Pair<String, org.jellyfin.apiclient.model.entities.ImageType> imageUrlAndType = getImageUrl(context, rowItem, imageTypeAndAspect.first, null);
         if (imageUrlAndType != null && Utils.isNonEmpty(imageUrlAndType.first)) {
             String blurHash = getImageBlurHashByUrl(rowItem, imageUrlAndType.first, imageUrlAndType.second);
-            if (blurHash == null)
+            if (blurHash == null && !rowItem.isPerson())
                 Timber.d("Could not get valid blurHash from <%s>", imageUrlAndType.first);
 
             holder.updateCardViewImage(imageUrlAndType.first, blurHash, imageTypeAndAspect.second);
         } else {
             holder.updateCardViewImage(null, null, imageTypeAndAspect.second);
-            Timber.d("Could not get valid ImageUrl <%s>", rowItem.getFullName(context));
+//            Timber.d("Could not get valid ImageUrl <%s>", rowItem.getFullName(context));
+        }
+    }
+
+    public Pair<Integer, Integer> getCardHeightWidth() {
+        return getCardHeightWidth(null, null, null);
+    }
+
+    // FIXME cardHeight vs ImageHeight -> aspect is for image not card ! -> adapt image or card for info area?
+    @NonNull
+    public Pair<Integer, Integer> getCardHeightWidth(@Nullable Double cardAspect, @Nullable Integer cardHeight, @Nullable Integer cardWidth) {
+        int width = MIN_CARD_WIDTH;
+        int height = cardHeight != null ? cardHeight : mStaticHeight != null ? mStaticHeight : DEFAULT_CARD_HEIGHT;
+        double aspect = cardAspect != null ? cardAspect : getDefaultAspect();
+        if (cardWidth != null)
+            width = Math.max(cardWidth, MIN_CARD_WIDTH);
+        if (cardHeight != null)
+            height = Math.min(cardHeight, MAX_CARD_HEIGHT);
+
+        if (cardWidth != null) {
+            height = (int) (width / aspect);
+            if (height > MAX_CARD_HEIGHT) {
+                height = MAX_CARD_HEIGHT;
+                width = (int) (height * aspect);   // NOTE: don't round so grids don't overflow!
+                Timber.w("cardWidth <%s> is to big for this aspect <%s>, adapting to W<%s>!", cardHeight, aspect, width);
+            }
+        } else {
+            width = (int) (height * aspect);  // NOTE: don't round so grids don't overflow!
+            if (width < MIN_CARD_WIDTH) {
+                width = MIN_CARD_WIDTH;
+                height = (int) (width / aspect);
+                Timber.w("CardHeight <%s> is to small for this aspect <%s>, adapting to H<%s>!", cardHeight, aspect, height);
+            }
+        }
+
+        return new Pair<>(height, width);
+    }
+
+    private double getDefaultAspect() {
+        if (Utils.isTrue(mSquareAspect)) {
+            return ASPECT_RATIO_SQUARE;
+        } else {
+            ImageType imageType = mImageType != null ? mImageType : DEFAULT_IMAGE_TYPE;
+            return switch (imageType) {
+                case POSTER -> ASPECT_RATIO_POSTER;
+                case THUMB -> ASPECT_RATIO_THUMB;
+                case BANNER -> ASPECT_RATIO_BANNER;
+            };
         }
     }
 
     @NonNull
-    public Pair<ImageType, Double> getImageTypeAndAspect(@NonNull final BaseRowItem item) {
+    protected Pair<ImageType, Double> getImageTypeAndAspect(@NonNull final BaseRowItem item) {
         Double aspect = null;
         BaseRowItem.ItemType rowType = item.getItemType();
         BaseItemType baseItemType = item.getBaseItemType();
@@ -415,7 +331,7 @@ public class CardPresenter extends Presenter {
             } catch (IllegalArgumentException ignored) {
             }
         }
-        if (mImageType == null) { // get defaults
+        if (mImageType == null) { // get aspect by type
             // baseType take priority
             if (baseItemType != null && mBaseItemTypeToImageMap.containsKey(baseItemType)) {
                 return mBaseItemTypeToImageMap.get(baseItemType);
@@ -444,9 +360,9 @@ public class CardPresenter extends Presenter {
                         }
                         break;
                 }
-                // handle invalid values, round to next common aspect
+                // handle slightly off values, round to next common aspect
                 if (aspect != null) {
-                    if (aspect < 0.1)
+                    if (aspect < 0.1 || aspect > 10.0)
                         aspect = null;
                     else if (Math.abs(aspect - ASPECT_RATIO_POSTER) < 0.1)
                         aspect = ASPECT_RATIO_POSTER;
@@ -462,71 +378,72 @@ public class CardPresenter extends Presenter {
             }
         }
         ImageType imageType = mImageType != null ? mImageType : DEFAULT_IMAGE_TYPE;
+        if (Utils.isTrue(mSquareAspect)) {
+            aspect = ASPECT_RATIO_SQUARE;
+        }
         if (aspect != null) {
             // estimate by aspect
             imageType = aspect <= 1.0 ? ImageType.POSTER : aspect > 5.0 ? ImageType.BANNER : ImageType.THUMB;
-        } else if (BaseItemType.Audio == baseItemType ||
-                BaseItemType.MusicArtist == baseItemType ||
-                BaseItemType.MusicAlbum == baseItemType ||
-                BaseItemType.MusicGenre == baseItemType
-                ) {
+        } else if (BaseItemType.Audio.equals(baseItemType) ||
+                BaseItemType.MusicArtist.equals(baseItemType) ||
+                BaseItemType.MusicAlbum.equals(baseItemType) ||
+                BaseItemType.MusicGenre.equals(baseItemType)) {
             // Always square for music types?
             aspect = ASPECT_RATIO_SQUARE;
         } else {
-            switch (imageType) {
-                case POSTER:
-                    aspect = ASPECT_RATIO_POSTER;
-                    break;
-                case THUMB:
-                    aspect = ASPECT_RATIO_THUMB;
-                    break;
-                case BANNER:
-                    aspect = ASPECT_RATIO_BANNER;
-                    break;
-            }
+            aspect = switch (imageType) {
+                case POSTER -> ASPECT_RATIO_POSTER;
+                case THUMB -> ASPECT_RATIO_THUMB;
+                case BANNER -> ASPECT_RATIO_BANNER;
+            };
         }
         return new Pair<>(imageType, aspect);
     }
 
-    private static final Pattern RegExTagPattern = Pattern.compile("tag=([0-9a-fA-F]{32})");
+    private final Pattern RegExTagPattern = Pattern.compile("tag=([0-9a-fA-F]{32})");
 
     @Nullable
-    private static String getImageBlurHashByUrl(@NonNull final BaseRowItem rowItem, @NonNull String imageUrl, @NonNull org.jellyfin.apiclient.model.entities.ImageType imageType) {
-        if (Utils.isNonEmpty(imageUrl) && rowItem.getBaseItem() != null && rowItem.getBaseItem().getImageBlurHashes() != null) {
-            try {
-                Matcher matcher = RegExTagPattern.matcher(imageUrl);
-                if (matcher.find()) {
-                    String tagId = matcher.group(1);
-                    return rowItem.getBaseItem().getImageBlurHashes().get(imageType).get(tagId);
+    private String getTagIdFromUrl(@NonNull String imageUrl) {
+        try {
+            Matcher matcher = RegExTagPattern.matcher(imageUrl);
+            if (matcher.find()) {
+                return matcher.group(1);
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    @Nullable
+    private String getImageBlurHashByUrl(@NonNull final BaseRowItem rowItem, @NonNull String imageUrl, @NonNull org.jellyfin.apiclient.model.entities.ImageType imageType) {
+        if (Utils.isNonEmpty(imageUrl)) {
+            String tagId = getTagIdFromUrl(imageUrl);
+            if (Utils.isNonEmpty(tagId)) {
+                if (rowItem.isBaseItem() && rowItem.getBaseItem() != null && rowItem.getBaseItem().getImageBlurHashes() != null) {
+                    if (rowItem.getBaseItem().getImageBlurHashes().containsKey(imageType)) {
+                        return rowItem.getBaseItem().getImageBlurHashes().get(imageType).get(tagId);
+                    }
+                } else if (rowItem.isPerson() && rowItem.getPerson() != null && rowItem.getPerson().getImageBlurHashes() != null) {
+                    if (rowItem.getPerson().getImageBlurHashes().containsKey(ModelCompat.asSdk(imageType))) {
+                        return rowItem.getPerson().getImageBlurHashes().get(ModelCompat.asSdk(imageType)).get(tagId);
+                    }
                 }
-            } catch (Exception ignored) {
             }
         }
         return null;
     }
 
     @Nullable
-    protected Pair<String, org.jellyfin.apiclient.model.entities.ImageType> getImageUrl(Context context, @NonNull final BaseRowItem rowItem, org.jellyfin.androidtv.constant.ImageType imageType, int maxHeight) {
+    protected Pair<String, org.jellyfin.apiclient.model.entities.ImageType> getImageUrl(Context context, @NonNull final BaseRowItem rowItem, org.jellyfin.androidtv.constant.ImageType imageType,@Nullable Integer maxHeight) {
         String imageUrl = null;
-        org.jellyfin.apiclient.model.entities.ImageType outImageType = null;
-        switch (imageType) {
-            case POSTER:
-                outImageType = org.jellyfin.apiclient.model.entities.ImageType.Primary;
-                break;
-            case THUMB:
-                outImageType = org.jellyfin.apiclient.model.entities.ImageType.Thumb;
-                break;
-            case BANNER:
-                outImageType = org.jellyfin.apiclient.model.entities.ImageType.Banner;
-                break;
-            default:
-                throw new IllegalStateException("Unexpected value: " + imageType);
-        }
+        org.jellyfin.apiclient.model.entities.ImageType outImageType = switch (imageType) {
+            case POSTER -> org.jellyfin.apiclient.model.entities.ImageType.Primary;
+            case THUMB -> org.jellyfin.apiclient.model.entities.ImageType.Thumb;
+            case BANNER -> org.jellyfin.apiclient.model.entities.ImageType.Banner;
+        };
         BaseItemDto baseItem = rowItem.getBaseItem();
         switch (rowItem.getItemType()) {
-            case BaseItem:
-            case LiveTvProgram:
-            case LiveTvRecording:
+            case BaseItem, LiveTvProgram, LiveTvRecording -> {
                 imageUrl = imageHelper.getValue().getImageUrl(ModelCompat.asSdk(baseItem), ModelCompat.asSdk(outImageType), true, maxHeight, null,
                         mAllowParentFallback, mPreferSeriesForEpisodes, mPreferSeasonForEpisodes);
                 // only for none Poster
@@ -535,14 +452,14 @@ public class CardPresenter extends Presenter {
                     imageUrl = imageHelper.getValue().getImageUrl(ModelCompat.asSdk(baseItem), ModelCompat.asSdk(outImageType), true, maxHeight, null,
                             mAllowParentFallback, mPreferSeriesForEpisodes, mPreferSeasonForEpisodes);
                 }
-                break;
-            case SearchHint:
+            }
+            case SearchHint -> {
                 SearchHint searchHint = rowItem.getSearchHint();
                 if (ImageType.THUMB == imageType && searchHint != null && Utils.isNonEmpty(searchHint.getThumbImageItemId()) && Utils.isNonEmpty(searchHint.getThumbImageTag())) {
                     imageUrl = ImageUtils.getImageUrl(searchHint.getThumbImageItemId(), org.jellyfin.apiclient.model.entities.ImageType.Thumb, searchHint.getThumbImageTag(), maxHeight);
                     outImageType = org.jellyfin.apiclient.model.entities.ImageType.Thumb;
                 }
-                break;
+            }
         }
         if (imageUrl == null) {
             imageUrl = rowItem.getPrimaryImageUrl(context, maxHeight);
@@ -553,19 +470,6 @@ public class CardPresenter extends Presenter {
         } else {
             return new Pair<>(imageUrl, outImageType);
         }
-    }
-
-    @Override
-    public void onUnbindViewHolder(Presenter.ViewHolder viewHolder) {
-        ((ViewHolder) viewHolder).resetCardView();
-    }
-
-    @Override
-    public void onViewAttachedToWindow(Presenter.ViewHolder viewHolder) {
-    }
-
-    public ImageType getImageType() {
-        return mImageType;
     }
 
     public void setDefaultRowTypeToImage(@NonNull BaseRowItem.ItemType rowType, @NonNull ImageType imageType, double aspect) {
@@ -604,6 +508,16 @@ public class CardPresenter extends Presenter {
 
     public CardPresenter setPreferSeasonForEpisodes(boolean prefer) {
         mPreferSeasonForEpisodes = prefer;
+        return this;
+    }
+
+    public CardPresenter setRatingDisplay(RatingType ratingType) {
+        mRatingType = ratingType;
+        return this;
+    }
+
+    public CardPresenter setSquareAspect(boolean isSquare) {
+        mSquareAspect = isSquare;
         return this;
     }
 }
