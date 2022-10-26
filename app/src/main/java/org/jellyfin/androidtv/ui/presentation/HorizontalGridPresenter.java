@@ -1,5 +1,6 @@
 package org.jellyfin.androidtv.ui.presentation;
 
+import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -8,15 +9,18 @@ import androidx.leanback.widget.FocusHighlight;
 import androidx.leanback.widget.FocusHighlightHelper;
 import androidx.leanback.widget.HorizontalGridView;
 import androidx.leanback.widget.ItemBridgeAdapter;
+import androidx.leanback.widget.ItemBridgeAdapterShadowOverlayWrapper;
 import androidx.leanback.widget.ObjectAdapter;
-import androidx.leanback.widget.OnChildViewHolderSelectedListener;
+import androidx.leanback.widget.OnChildSelectedListener;
 import androidx.leanback.widget.OnItemViewClickedListener;
 import androidx.leanback.widget.OnItemViewSelectedListener;
 import androidx.leanback.widget.Presenter;
 import androidx.leanback.widget.ShadowOverlayContainer;
-import androidx.recyclerview.widget.RecyclerView;
+import androidx.leanback.widget.ShadowOverlayHelper;
 
 import org.jellyfin.androidtv.databinding.HorizontalGridBinding;
+
+import java.util.Objects;
 
 import timber.log.Timber;
 
@@ -24,8 +28,50 @@ import timber.log.Timber;
  * A presenter that renders objects in a horizontal grid.
  */
 public class HorizontalGridPresenter extends Presenter {
-    public class ViewHolder extends Presenter.ViewHolder {
-        final ItemBridgeAdapter mItemBridgeAdapter = new ItemBridgeAdapter();
+    class HorizontalGridItemBridgeAdapter extends ItemBridgeAdapter {
+        @Override
+        protected void onCreate(ItemBridgeAdapter.ViewHolder viewHolder) {
+            if (viewHolder.itemView instanceof ViewGroup) {
+                ((ViewGroup) viewHolder.itemView).setTransitionGroup(true);
+            }
+            if (mShadowOverlayHelper != null) {
+                mShadowOverlayHelper.onViewCreated(viewHolder.itemView);
+            }
+        }
+
+        @Override
+        public void onBind(final ItemBridgeAdapter.ViewHolder itemViewHolder) {
+            // Only when having an OnItemClickListener, we attach the OnClickListener.
+            if (getOnItemViewClickedListener() != null) {
+                final View itemView = itemViewHolder.getViewHolder().view;
+                itemView.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if (getOnItemViewClickedListener() != null) {
+                            // Row is always null
+                            getOnItemViewClickedListener().onItemClicked(
+                                    itemViewHolder.getViewHolder(), itemViewHolder.getItem(), null, null);
+                        }
+                    }
+                });
+            }
+        }
+
+        @Override
+        public void onUnbind(ItemBridgeAdapter.ViewHolder viewHolder) {
+            if (getOnItemViewClickedListener() != null) {
+                viewHolder.getViewHolder().view.setOnClickListener(null);
+            }
+        }
+
+        @Override
+        public void onAttachedToWindow(ItemBridgeAdapter.ViewHolder viewHolder) {
+            viewHolder.itemView.setActivated(true);
+        }
+    }
+
+    public static class ViewHolder extends Presenter.ViewHolder {
+        ItemBridgeAdapter mItemBridgeAdapter;
         final HorizontalGridView mGridView;
         boolean mInitialized;
 
@@ -39,23 +85,34 @@ public class HorizontalGridPresenter extends Presenter {
         }
     }
 
+    private ViewHolder mViewHolder;
     private int mNumRows = -1;
-    private int mZoomFactor;
+    private int mFocusZoomFactor;
+    private boolean mUseFocusDimmer;
     private boolean mShadowEnabled = true;
+    private boolean mKeepChildForeground = true;
     private OnItemViewSelectedListener mOnItemViewSelectedListener;
     private OnItemViewClickedListener mOnItemViewClickedListener;
     private boolean mRoundedCornersEnabled = true;
+    ShadowOverlayHelper mShadowOverlayHelper;
+    private ItemBridgeAdapter.Wrapper mShadowOverlayWrapper;
 
     public HorizontalGridPresenter() {
         this(FocusHighlight.ZOOM_FACTOR_LARGE);
     }
 
-    public HorizontalGridPresenter(int zoomFactor) {
-        mZoomFactor = zoomFactor;
+    public HorizontalGridPresenter(int focusZoomFactor, boolean useFocusDimmer) {
+        mFocusZoomFactor = focusZoomFactor;
+        mUseFocusDimmer = useFocusDimmer;
+    }
+
+    public HorizontalGridPresenter(int focusZoomFactor) {
+        this(focusZoomFactor, true);
     }
 
     public void setPosition(int ndx) {
-        if (mViewHolder != null) mViewHolder.getGridView().setSelectedPosition(ndx);
+        if (mViewHolder != null)
+            mViewHolder.getGridView().setSelectedPosition(ndx);
     }
 
     /**
@@ -132,15 +189,34 @@ public class HorizontalGridPresenter extends Presenter {
         return isUsingDefaultShadow() && getShadowEnabled();
     }
 
+    /**
+     * Returns the zoom factor used for focus highlighting.
+     */
+    public final int getFocusZoomFactor() {
+        return mFocusZoomFactor;
+    }
+
+    /**
+     * Returns true if the focus dimmer is used for focus highlighting; false otherwise.
+     */
+    public final boolean isFocusDimmerUsed() {
+        return mUseFocusDimmer;
+    }
+
+    protected ShadowOverlayHelper.Options createShadowOverlayOptions() {
+        return ShadowOverlayHelper.Options.DEFAULT;
+    }
+
     @Override
     public final ViewHolder onCreateViewHolder(ViewGroup parent) {
-        ViewHolder vh = createGridViewHolder(parent);
-        vh.mInitialized = false;
-        initializeGridViewHolder(vh);
-        if (!vh.mInitialized) {
+        mViewHolder = createGridViewHolder(parent);
+        mViewHolder.mInitialized = false;
+        mViewHolder.mItemBridgeAdapter = new HorizontalGridItemBridgeAdapter();
+        initializeGridViewHolder(mViewHolder);
+        if (!mViewHolder.mInitialized) {
             throw new RuntimeException("super.initializeGridViewHolder() must be called");
         }
-        return vh;
+        return mViewHolder;
     }
 
     /**
@@ -150,21 +226,6 @@ public class HorizontalGridPresenter extends Presenter {
         HorizontalGridBinding binding = HorizontalGridBinding.inflate(LayoutInflater.from(parent.getContext()), parent, false);
         return new ViewHolder(binding.horizontalGrid);
     }
-
-    private ItemBridgeAdapter.Wrapper mWrapper = new ItemBridgeAdapter.Wrapper() {
-        @Override
-        public View createWrapper(View root) {
-            ShadowOverlayContainer wrapper = new ShadowOverlayContainer(root.getContext());
-            wrapper.setLayoutParams(
-                    new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            wrapper.initialize(needsDefaultShadow(), true, areChildRoundedCornersEnabled());
-            return wrapper;
-        }
-        @Override
-        public void wrap(View wrapper, View wrapped) {
-            ((ShadowOverlayContainer) wrapper).wrap(wrapped);
-        }
-    };
 
     /**
      * Called after a {@link HorizontalGridPresenter.ViewHolder} is created.
@@ -181,64 +242,63 @@ public class HorizontalGridPresenter extends Presenter {
         vh.getGridView().setNumRows(mNumRows);
         vh.mInitialized = true;
 
-        vh.mItemBridgeAdapter.setWrapper(mWrapper);
-        if (needsDefaultShadow() || areChildRoundedCornersEnabled()) {
-            ShadowOverlayContainer.prepareParentForShadow(vh.getGridView());
-            ((ViewGroup) vh.view).setClipChildren(false);
+        Context context = vh.mGridView.getContext();
+        if (mShadowOverlayHelper == null) {
+            mShadowOverlayHelper = new ShadowOverlayHelper.Builder()
+                    .needsOverlay(mUseFocusDimmer)
+                    .needsShadow(needsDefaultShadow())
+                    .needsRoundedCorner(areChildRoundedCornersEnabled())
+                    .preferZOrder(isUsingZOrder())
+                    .keepForegroundDrawable(mKeepChildForeground)
+                    .options(createShadowOverlayOptions())
+                    .build(context);
+            if (mShadowOverlayHelper.needsWrapper()) {
+                mShadowOverlayWrapper = new ItemBridgeAdapterShadowOverlayWrapper(
+                        mShadowOverlayHelper);
+            }
         }
-        vh.getGridView().setFocusDrawingOrderEnabled(!isUsingZOrder());
+
+        vh.mItemBridgeAdapter.setWrapper(mShadowOverlayWrapper);
+        mShadowOverlayHelper.prepareParentForShadow(vh.mGridView);
+        vh.getGridView().setFocusDrawingOrderEnabled(mShadowOverlayHelper.getShadowType()
+                != ShadowOverlayHelper.SHADOW_DYNAMIC);
         FocusHighlightHelper.setupBrowseItemFocusHighlight(vh.mItemBridgeAdapter,
-                mZoomFactor, true);
+                mFocusZoomFactor, mUseFocusDimmer);
 
         final ViewHolder gridViewHolder = vh;
-        vh.getGridView().setOnChildViewHolderSelectedListener(new OnChildViewHolderSelectedListener() {
+        vh.getGridView().setOnChildSelectedListener(new OnChildSelectedListener() {
             @Override
-            public void onChildViewHolderSelected(RecyclerView parent, RecyclerView.ViewHolder child, int position, int subposition) {
-                if (child != null) {
-                    selectChildView(gridViewHolder, child.itemView);
-                }
-            }
-        });
-
-        vh.mItemBridgeAdapter.setAdapterListener(new ItemBridgeAdapter.AdapterListener() {
-            @Override
-            public void onBind(final ItemBridgeAdapter.ViewHolder itemViewHolder) {
-                // Only when having an OnItemClickListner, we attach the OnClickListener.
-                if (getOnItemViewClickedListener() != null) {
-                    final View itemView = itemViewHolder.getViewHolder().view;
-                    itemView.setOnClickListener(new View.OnClickListener() {
-                        @Override
-                        public void onClick(View view) {
-                            if (getOnItemViewClickedListener() != null) {
-                                // Row is always null
-                                getOnItemViewClickedListener().onItemClicked(
-                                        itemViewHolder.getViewHolder(), itemViewHolder.getItem(), null, null);
-                            }
-                        }
-                    });
-                }
-            }
-
-            @Override
-            public void onUnbind(ItemBridgeAdapter.ViewHolder viewHolder) {
-                if (getOnItemViewClickedListener() != null) {
-                    viewHolder.getViewHolder().view.setOnClickListener(null);
-                }
-            }
-
-            @Override
-            public void onAttachedToWindow(ItemBridgeAdapter.ViewHolder viewHolder) {
-                viewHolder.itemView.setActivated(true);
+            public void onChildSelected(ViewGroup parent, View view, int position, long id) {
+                selectChildView(gridViewHolder, view);
             }
         });
     }
 
-    ViewHolder mViewHolder;
+    /**
+     * Set if keeps foreground of child of this grid, the foreground will not
+     * be used for overlay color.  Default value is true.
+     *
+     * @param keep   True if keep foreground of child of this grid.
+     */
+    public final void setKeepChildForeground(boolean keep) {
+        mKeepChildForeground = keep;
+    }
+
+    /**
+     * Returns true if keeps foreground of child of this grid, the foreground will not
+     * be used for overlay color.  Default value is true.
+     *
+     * @return   True if keeps foreground of child of this grid.
+     */
+    public final boolean getKeepChildForeground() {
+        return mKeepChildForeground;
+    }
 
     @Override
     public void onBindViewHolder(Presenter.ViewHolder viewHolder, Object item) {
         Timber.d("onBindViewHolder %s", item);
-        mViewHolder = (ViewHolder) viewHolder;
+        Objects.requireNonNull(item);
+        ViewHolder mViewHolder = (ViewHolder) viewHolder;
         mViewHolder.mItemBridgeAdapter.setAdapter((ObjectAdapter) item);
         mViewHolder.getGridView().setAdapter(mViewHolder.mItemBridgeAdapter);
     }
@@ -293,6 +353,20 @@ public class HorizontalGridPresenter extends Presenter {
                 getOnItemViewSelectedListener().onItemSelected(ibh.getViewHolder(), ibh.getItem(), null, null);
             }
         }
+    }
+
+    /**
+     * Changes the visibility of views.  The entrance transition will be run against the views that
+     * change visibilities.  This method is called by the fragment, it should not be called
+     * directly by the application.
+     *
+     * @param holder         The ViewHolder for the vertical grid.
+     * @param afterEntrance  true if children of vertical grid participating in entrance transition
+     *                       should be set to visible, false otherwise.
+     */
+    public void setEntranceTransitionState(HorizontalGridPresenter.ViewHolder holder,
+                                           boolean afterEntrance) {
+        holder.mGridView.setChildrenVisibility(afterEntrance? View.VISIBLE : View.INVISIBLE);
     }
 }
 
