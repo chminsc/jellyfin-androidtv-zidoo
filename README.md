@@ -1,6 +1,6 @@
 
-<h1 align="center">Jellyfin Android TV Zidoo-Edition</h1>  
-<h3 align="center">Fork of the <a href="https://jellyfin.org">Jellyfin Project</a></h3>  
+<h1 align="center">a Jellyfin TV Client, optimized for Zidoo media players aka "Zidoo Edition"</h1>  
+<h3 align="center">based on the <a href="https://github.com/jellyfin/jellyfin-androidtv">official Jellyfin TV Client</a></h3>  
   
 ---  
   
@@ -23,7 +23,7 @@
 <img alt="Join our Subreddit" src="https://img.shields.io/badge/reddit-r%2Fjellyfin-%23FF5700.svg"/>  
 </a>  
   
-"Zidoo-Edition" is a unofficial community fork of the Jellyfin Android TV client, adapted to better run on [Zidoo media players](https://www.zidoo.tv) running Android 9+.
+"Zidoo-Edition" is a unofficial community fork, based on the official Jellyfin Android TV client, adapted to better run on [Zidoo media players](https://www.zidoo.tv) running Android 9+.
 ### Release [downloads here](https://github.com/Andy2244/jellyfin-androidtv-zidoo/releases)
 TIP: you can directly install from your browser via `http://zidoo_ip:18888` web interface
 ### App ONLY works with latest 10.8.1+ server's, beta7 is the last version that work's for 10.8.0 server's!
