@@ -9,7 +9,6 @@ import android.content.ActivityNotFoundException;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Point;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
@@ -20,6 +19,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.PopupMenu;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.view.ViewKt;
 import androidx.leanback.app.RowsSupportFragment;
@@ -61,7 +61,6 @@ import org.jellyfin.androidtv.ui.playback.ExternalPlayerActivity;
 import org.jellyfin.androidtv.ui.playback.MediaManager;
 import org.jellyfin.androidtv.ui.playback.PlaybackLauncher;
 import org.jellyfin.androidtv.ui.presentation.CardPresenter;
-import org.jellyfin.androidtv.ui.presentation.CustomListRowPresenter;
 import org.jellyfin.androidtv.ui.presentation.InfoCardPresenter;
 import org.jellyfin.androidtv.ui.presentation.MyDetailsOverviewRowPresenter;
 import org.jellyfin.androidtv.ui.shared.BaseActivity;
@@ -69,7 +68,10 @@ import org.jellyfin.androidtv.ui.shared.MessageListener;
 import org.jellyfin.androidtv.util.ImageHelper;
 import org.jellyfin.androidtv.util.ImageUtils;
 import org.jellyfin.androidtv.util.KeyProcessor;
+import org.jellyfin.androidtv.util.LayoutHelper;
 import org.jellyfin.androidtv.util.MarkdownRenderer;
+import org.jellyfin.androidtv.util.SmallListRow;
+import org.jellyfin.androidtv.util.ThumbListRow;
 import org.jellyfin.androidtv.util.TimeUtils;
 import org.jellyfin.androidtv.util.Utils;
 import org.jellyfin.androidtv.util.apiclient.BaseItemUtils;
@@ -117,6 +119,7 @@ import timber.log.Timber;
 public class FullDetailsActivity extends BaseActivity implements RecordingIndicatorView {
 
     private int BUTTON_SIZE;
+    private int MAX_DISPLAY_ACTIONS = 8;
 
     private TextUnderButton mResumeButton;
     private TextUnderButton mPrevButton;
@@ -140,10 +143,9 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
 
     private MyDetailsOverviewRowPresenter mDorPresenter;
     private MyDetailsOverviewRow mDetailsOverviewRow;
-    private CustomListRowPresenter mListRowPresenter;
 
     private FullDetailsActivity mActivity;
-    private Handler mLoopHandler = new Handler();
+    private final Handler mLoopHandler = new Handler();
     private Runnable mClockLoop;
 
     private BaseItemDto mBaseItem;
@@ -151,14 +153,14 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
     private ArrayList<MediaSourceInfo> versions;
     private int selectedVersionPopupIndex = 0;
 
-    private Lazy<ApiClient> apiClient = inject(ApiClient.class);
-    private Lazy<GsonJsonSerializer> serializer = inject(GsonJsonSerializer.class);
-    private Lazy<UserPreferences> userPreferences = inject(UserPreferences.class);
-    private Lazy<SystemPreferences> systemPreferences = inject(SystemPreferences.class);
-    private Lazy<DataRefreshService> dataRefreshService = inject(DataRefreshService.class);
-    private Lazy<BackgroundService> backgroundService = inject(BackgroundService.class);
-    private Lazy<MediaManager> mediaManager = inject(MediaManager.class);
-    private Lazy<MarkdownRenderer> markdownRenderer = inject(MarkdownRenderer.class);
+    private final Lazy<ApiClient> apiClient = inject(ApiClient.class);
+    private final Lazy<GsonJsonSerializer> serializer = inject(GsonJsonSerializer.class);
+    private final Lazy<UserPreferences> userPreferences = inject(UserPreferences.class);
+    private final Lazy<SystemPreferences> systemPreferences = inject(SystemPreferences.class);
+    private final Lazy<DataRefreshService> dataRefreshService = inject(DataRefreshService.class);
+    private final Lazy<BackgroundService> backgroundService = inject(BackgroundService.class);
+    private final Lazy<MediaManager> mediaManager = inject(MediaManager.class);
+    private final Lazy<MarkdownRenderer> markdownRenderer = inject(MarkdownRenderer.class);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -173,7 +175,7 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
         ActivityFullDetailsBinding binding = ActivityFullDetailsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        BUTTON_SIZE = Utils.convertDpToPixel(this, 40);
+        BUTTON_SIZE = Utils.convertDpToPixel(this, 35);
         mActivity = this;
         backgroundService.getValue().attach(this);
 
@@ -419,88 +421,95 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
 
     }
 
-    private class BuildDorTask extends AsyncTask<BaseItemDto, Integer, MyDetailsOverviewRow> {
+    private MyDetailsOverviewRow buildOverviewRow(@NonNull BaseItemDto item) {
 
-        @Override
-        protected MyDetailsOverviewRow doInBackground(BaseItemDto... params) {
-            BaseItemDto item = params[0];
+        // Figure image size
+        Double aspect = ImageUtils.getImageAspectRatio(item);
+        int posterHeight = aspect > 1 ? Utils.convertDpToPixel(mActivity, 160) : Utils.convertDpToPixel(mActivity, item.getBaseItemType() == BaseItemType.Person || item.getBaseItemType() == BaseItemType.MusicArtist ? 300 : 200);
+        mDetailsOverviewRow = new MyDetailsOverviewRow(ModelCompat.asSdk(item));
+        mDetailsOverviewRow.MediaSourceIndex = selectedVersionPopupIndex;
 
-            // Figure image size
-            Double aspect = ImageUtils.getImageAspectRatio(item);
-            int posterHeight = aspect > 1 ? Utils.convertDpToPixel(mActivity, 160) : Utils.convertDpToPixel(mActivity, item.getBaseItemType() == BaseItemType.Person || item.getBaseItemType() == BaseItemType.MusicArtist ? 300 : 200);
-            mDetailsOverviewRow = new MyDetailsOverviewRow(ModelCompat.asSdk(item));
+        String imageUrl = KoinJavaComponent.<ImageHelper>get(ImageHelper.class).getImageUrl(ModelCompat.asSdk(mBaseItem), ImageType.LOGO, true, null, 600, true, false, false);
+        if (imageUrl == null) {
+            imageUrl = ImageUtils.getPrimaryImageUrl(mBaseItem, posterHeight);
+        }
+        if (item.getRunTimeTicks() != null && item.getRunTimeTicks() > 0 && item.getUserData() != null && item.getUserData().getPlaybackPositionTicks() > 0)
+            mDetailsOverviewRow.setProgress(((int) (item.getUserData().getPlaybackPositionTicks() * 100.0 / item.getRunTimeTicks())));
 
-            String imageUrl = KoinJavaComponent.<ImageHelper>get(ImageHelper.class).getImageUrl(ModelCompat.asSdk(mBaseItem), ImageType.LOGO, true, null, 600, true, false, false);
-            if (imageUrl == null) {
-                imageUrl = ImageUtils.getPrimaryImageUrl(mBaseItem, posterHeight);
-                if (item.getRunTimeTicks() != null && item.getRunTimeTicks() > 0 && item.getUserData() != null && item.getUserData().getPlaybackPositionTicks() > 0)
-                    mDetailsOverviewRow.setProgress(((int) (item.getUserData().getPlaybackPositionTicks() * 100.0 / item.getRunTimeTicks())));
-            }
+        mDetailsOverviewRow.setSummary(item.getOverview());
+        switch (item.getBaseItemType()) {
+            case Person:
+            case MusicArtist:
+                break;
+            default:
 
-            mDetailsOverviewRow.setSummary(item.getOverview());
-            switch (item.getBaseItemType()) {
-                case Person:
-                case MusicArtist:
-                    break;
-                default:
+                BaseItemPerson director = BaseItemUtils.getFirstPerson(item, PersonType.Director);
 
-                    BaseItemPerson director = BaseItemUtils.getFirstPerson(item, PersonType.Director);
+                InfoItem firstRow;
+                if (item.getBaseItemType() == BaseItemType.Series) {
+                    firstRow = new InfoItem(
+                            getString(R.string.lbl_seasons),
+                            String.format("%d", Utils.getSafeValue(item.getChildCount(), 0)));
+                } else {
+                    firstRow = new InfoItem(
+                            getString(R.string.lbl_directed_by),
+                            director != null ? director.getName() : getString(R.string.lbl_bracket_unknown));
+                }
+                mDetailsOverviewRow.setInfoItem1(firstRow);
 
-                    InfoItem firstRow;
-                    if (item.getBaseItemType() == BaseItemType.Series) {
-                        firstRow = new InfoItem(
-                                getString(R.string.lbl_seasons),
-                                String.format("%d", Utils.getSafeValue(item.getChildCount(), 0)));
-                    } else {
-                        firstRow = new InfoItem(
-                                getString(R.string.lbl_directed_by),
-                                director != null ? director.getName() : getString(R.string.lbl_bracket_unknown));
-                    }
-                    mDetailsOverviewRow.setInfoItem1(firstRow);
-
-                    if ((item.getRunTimeTicks() != null && item.getRunTimeTicks() > 0) || item.getOriginalRunTimeTicks() != null) {
-                        mDetailsOverviewRow.setInfoItem2(new InfoItem(getString(R.string.lbl_runs), getRunTimeString()));
-                        ClockBehavior clockBehavior = userPreferences.getValue().get(UserPreferences.Companion.getClockBehavior());
-                        if (clockBehavior == ClockBehavior.ALWAYS || clockBehavior == ClockBehavior.IN_MENUS) {
-                            mDetailsOverviewRow.setInfoItem3(new InfoItem(getString(R.string.lbl_ends), getEndTime()));
-                        } else {
-                            mDetailsOverviewRow.setInfoItem3(new InfoItem());
-                        }
-                    } else {
-                        mDetailsOverviewRow.setInfoItem2(new InfoItem());
-                        mDetailsOverviewRow.setInfoItem3(new InfoItem());
-                    }
-
-            }
-
-            mDetailsOverviewRow.setImageBitmap(imageUrl);
-
-            return mDetailsOverviewRow;
+                if ((item.getRunTimeTicks() != null && item.getRunTimeTicks() > 0) || item.getOriginalRunTimeTicks() != null) {
+                    mDetailsOverviewRow.setInfoItem2(new InfoItem(getString(R.string.lbl_runs), getRunTimeString()));
+                    mDetailsOverviewRow.setInfoItem3(new InfoItem(getString(R.string.lbl_ends), getEndTime()));
+                } else {
+                    mDetailsOverviewRow.setInfoItem2(new InfoItem());
+                    mDetailsOverviewRow.setInfoItem3(new InfoItem());
+                }
         }
 
-        @Override
-        protected void onPostExecute(MyDetailsOverviewRow detailsOverviewRow) {
-            super.onPostExecute(detailsOverviewRow);
+        mDetailsOverviewRow.setImageBitmap(imageUrl);
 
-            if (isFinishing()) return;
+        return mDetailsOverviewRow;
+    }
 
-            ClassPresenterSelector ps = new ClassPresenterSelector();
-            ps.addClassPresenter(MyDetailsOverviewRow.class, mDorPresenter);
-            mListRowPresenter = new CustomListRowPresenter(Utils.convertDpToPixel(mActivity, 10));
-            ps.addClassPresenter(ListRow.class, mListRowPresenter);
-            mRowsAdapter = new ArrayObjectAdapter(ps);
-            mRowsFragment.setAdapter(mRowsAdapter);
-            mRowsAdapter.add(detailsOverviewRow);
+    protected void updateMediaSourceVersion() {
+        if (mDetailsOverviewRow != null && mBaseItem != null) {
+            if ((mBaseItem.getRunTimeTicks() != null && mBaseItem.getRunTimeTicks() > 0) || mBaseItem.getOriginalRunTimeTicks() != null) {
+                mDetailsOverviewRow.setInfoItem2(new InfoItem(getString(R.string.lbl_runs), getRunTimeString()));
+                mDetailsOverviewRow.setInfoItem3(new InfoItem(getString(R.string.lbl_ends), getEndTime()));
+            }
+            mDetailsOverviewRow.MediaSourceIndex = selectedVersionPopupIndex;
+            if (versionsButton != null) {
+                String label = getString(R.string.select_version);
+                MediaSourceInfo source = getMediaSourceSafe(mBaseItem, selectedVersionPopupIndex);
+                if (source != null) {
+                    String versionSuffix = source.getName();
+                    if (isNonEmpty(versionSuffix) && !versionSuffix.equals(mBaseItem.getName())) {
+                        label = versionSuffix; // set suffix name
+                    }
+                }
+                versionsButton.setLabel(label);
+            }
 
-            updateInfo(detailsOverviewRow.getItem());
-            addAdditionalRows(mRowsAdapter);
-
+            mRowsAdapter.notifyArrayItemRangeChanged(0, 1);
         }
+    }
+
+    protected void createOverviewLayout(@NonNull MyDetailsOverviewRow detailsOverviewRow) {
+        ClassPresenterSelector ps = LayoutHelper.INSTANCE.buildDefaultRowPresenterSelector(null, 0);
+        ps.addClassPresenter(MyDetailsOverviewRow.class, mDorPresenter);
+
+        mRowsAdapter = new ArrayObjectAdapter(ps);
+        mRowsFragment.setAdapter(mRowsAdapter);
+
+        mRowsAdapter.add(detailsOverviewRow);
+        updateInfo(detailsOverviewRow.getItem());
+
+        addAdditionalRows(mRowsAdapter);
     }
 
     public void setBaseItem(BaseItemDto item) {
         mBaseItem = item;
-        backgroundService.getValue().setBackground(item);
+        backgroundService.getValue().setBackground(ModelCompat.asSdk(item), true);
         if (mBaseItem != null) {
             if (mChannelId != null) {
                 mBaseItem.setParentId(mChannelId);
@@ -508,13 +517,28 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
                 mBaseItem.setEndDate(mProgramInfo.getEndDate());
                 mBaseItem.setRunTimeTicks(mProgramInfo.getRunTimeTicks());
             }
-            new BuildDorTask().execute(item);
+            createOverviewLayout(buildOverviewRow(item));
         }
     }
 
     protected void addItemRow(ArrayObjectAdapter parent, ItemRowAdapter row, int index, String headerText) {
         HeaderItem header = new HeaderItem(index, headerText);
         ListRow listRow = new ListRow(header, row);
+        parent.add(listRow);
+        row.setRow(listRow);
+        row.Retrieve();
+    }
+
+    protected void addItemRow(ArrayObjectAdapter parent, ItemRowAdapter row, int index, String headerText, Class<? extends ListRow> rowClass) {
+        HeaderItem header = new HeaderItem(index, headerText);
+        ListRow listRow;
+        if (rowClass == SmallListRow.class)
+            listRow = new SmallListRow(header, row);
+        else if (rowClass == ThumbListRow.class)
+            listRow = new ThumbListRow(header, row);
+        else
+            listRow = new ListRow(header, row);
+
         parent.add(listRow);
         row.setRow(listRow);
         row.Retrieve();
@@ -551,7 +575,7 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
                 if (mBaseItem.getChapters() != null && mBaseItem.getChapters().size() > 0) {
                     List<ChapterItemInfo> chapters = BaseItemUtils.buildChapterItems(mBaseItem);
                     ItemRowAdapter chapterAdapter = new ItemRowAdapter(this, chapters, new CardPresenter(true, 240), adapter);
-                    addItemRow(adapter, chapterAdapter, 2, getString(R.string.lbl_chapters));
+                    addItemRow(adapter, chapterAdapter, 2, getString(R.string.lbl_chapters), ThumbListRow.class);
                 }
 
                 //Similar
@@ -651,8 +675,8 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
                         ItemFields.PrimaryImageAspectRatio,
                         ItemFields.ChildCount
                 });
-                ItemRowAdapter nextUpAdapter = new ItemRowAdapter(this, nextUpQuery, new CardPresenter(true, 260), adapter);
-                addItemRow(adapter, nextUpAdapter, 0, getString(R.string.lbl_next_up));
+                ItemRowAdapter nextUpAdapter = new ItemRowAdapter(this, nextUpQuery, new CardPresenter(), adapter);
+                addItemRow(adapter, nextUpAdapter, 0, getString(R.string.lbl_next_up), ThumbListRow.class);
 
                 SeasonQuery seasons = new SeasonQuery();
                 seasons.setSeriesId(mBaseItem.getId());
@@ -671,12 +695,11 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
                         ItemFields.ChildCount
                 });
                 ItemRowAdapter upcomingAdapter = new ItemRowAdapter(this, upcoming, new CardPresenter(), adapter);
-                addItemRow(adapter, upcomingAdapter, 2, getString(R.string.lbl_upcoming));
+                addItemRow(adapter, upcomingAdapter, 2, getString(R.string.lbl_upcoming), ThumbListRow.class);
 
                 if (mBaseItem.getPeople() != null && mBaseItem.getPeople().length > 0) {
-                    ItemRowAdapter seriesCastAdapter = new ItemRowAdapter(this, ModelCompat.asSdk(mBaseItem.getPeople()), new CardPresenter(true, 260), adapter);
+                    ItemRowAdapter seriesCastAdapter = new ItemRowAdapter(this, ModelCompat.asSdk(mBaseItem.getPeople()), new CardPresenter(), adapter);
                     addItemRow(adapter, seriesCastAdapter, 3, getString(R.string.lbl_cast_crew));
-
                 }
 
                 SimilarItemsQuery similarSeries = new SimilarItemsQuery();
@@ -686,7 +709,7 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
                         ItemFields.ChildCount
                 });
                 similarSeries.setId(mBaseItem.getId());
-                similarSeries.setLimit(20);
+                similarSeries.setLimit(30);
                 ItemRowAdapter similarAdapter = new ItemRowAdapter(this, similarSeries, QueryType.SimilarSeries, new CardPresenter(), adapter);
                 addItemRow(adapter, similarAdapter, 4, getString(R.string.lbl_more_like_this));
                 break;
@@ -697,9 +720,9 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
                     nextEpisodes.setParentId(mBaseItem.getSeasonId());
                     nextEpisodes.setIncludeItemTypes(new String[]{"Episode"});
                     nextEpisodes.setStartIndex(mBaseItem.getIndexNumber()); // query index is zero-based but episode no is not
-                    nextEpisodes.setLimit(20);
-                    ItemRowAdapter nextAdapter = new ItemRowAdapter(this, nextEpisodes, new CardPresenter(true, 240), adapter);
-                    addItemRow(adapter, nextAdapter, 5, getString(R.string.lbl_next_episode));
+                    nextEpisodes.setLimit(30);
+                    ItemRowAdapter nextAdapter = new ItemRowAdapter(this, nextEpisodes, new CardPresenter(), adapter);
+                    addItemRow(adapter, nextAdapter, 5, getString(R.string.lbl_next_episode), ThumbListRow.class);
                 }
 
                 //Guest stars
@@ -709,7 +732,7 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
                         if (person.getType() == PersonType.GuestStar) guests.add(person);
                     }
                     if (guests.size() > 0) {
-                        ItemRowAdapter castAdapter = new ItemRowAdapter(this, guests.toArray(new BaseItemPerson[guests.size()]), new CardPresenter(true, 260), adapter);
+                        ItemRowAdapter castAdapter = new ItemRowAdapter(this, guests.toArray(new BaseItemPerson[guests.size()]), new CardPresenter(), adapter);
                         addItemRow(adapter, castAdapter, 0, getString(R.string.lbl_guest_stars));
                     }
                 }
@@ -717,8 +740,8 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
                 //Chapters
                 if (mBaseItem.getChapters() != null && mBaseItem.getChapters().size() > 0) {
                     List<ChapterItemInfo> chapters = BaseItemUtils.buildChapterItems(mBaseItem);
-                    ItemRowAdapter chapterAdapter = new ItemRowAdapter(this, chapters, new CardPresenter(true, 240), adapter);
-                    addItemRow(adapter, chapterAdapter, 1, getString(R.string.lbl_chapters));
+                    ItemRowAdapter chapterAdapter = new ItemRowAdapter(this, chapters, new CardPresenter(), adapter);
+                    addItemRow(adapter, chapterAdapter, 1, getString(R.string.lbl_chapters), ThumbListRow.class);
                 }
 
                 addInfoRows(adapter);
@@ -879,11 +902,14 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
     private TextUnderButton goToSeriesButton = null;
     private TextUnderButton queueButton = null;
     private TextUnderButton deleteButton = null;
-    private TextUnderButton moreButton;
+    private TextUnderButton moreButton = null;
     private TextUnderButton playButton = null;
     private TextUnderButton trailerButton = null;
+    private TextUnderButton versionsButton = null;
 
     private void addButtons(int buttonSize) {
+        mDetailsOverviewRow.clearActions();
+
         String buttonLabel;
         if (mBaseItem.getBaseItemType() == BaseItemType.Series || mBaseItem.getBaseItemType() == BaseItemType.SeriesTimer) {
             buttonLabel = getString(R.string.lbl_play_next_up);
@@ -1007,7 +1033,7 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
                     label = versionSuffix; // set suffix name
                 }
             }
-            TextUnderButton versionsButton = TextUnderButton.create(this, R.drawable.ic_guide, buttonSize, 0, label, new View.OnClickListener() {
+            versionsButton = TextUnderButton.create(this, R.drawable.ic_guide, buttonSize, 0, label, new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
                     if (versions != null ) {
@@ -1364,7 +1390,7 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
             public boolean onMenuItemClick(MenuItem menuItem) {
                 if (selectedVersionPopupIndex != menuItem.getItemId()) {
                     selectedVersionPopupIndex = menuItem.getItemId();
-                    new BuildDorTask().execute(mBaseItem); // refresh
+                    updateMediaSourceVersion();
                 }
                 return true;
             }
@@ -1392,7 +1418,7 @@ public class FullDetailsActivity extends BaseActivity implements RecordingIndica
 
         collapsedOptions = 0;
         for (TextUnderButton action : actionsList) {
-            if (visibleOptions - (ViewKt.isVisible(action) ? 1 : 0) + (!ViewKt.isVisible(moreButton) && collapsedOptions > 0 ? 1 : 0) < 5) {
+            if (visibleOptions - (ViewKt.isVisible(action) ? 1 : 0) + (!ViewKt.isVisible(moreButton) && collapsedOptions > 0 ? 1 : 0) < MAX_DISPLAY_ACTIONS) {
                 if (!ViewKt.isVisible(action)) {
                     action.setVisibility(View.VISIBLE);
                     visibleOptions++;
