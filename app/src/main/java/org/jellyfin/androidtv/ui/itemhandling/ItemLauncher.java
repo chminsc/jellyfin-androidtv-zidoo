@@ -54,7 +54,8 @@ public class ItemLauncher {
     public static void createUserViewIntent(final org.jellyfin.sdk.model.api.BaseItemDto baseItem, final Context context, final Consumer<Intent> callback) {
         Timber.d("**** Collection type: %s", baseItem.getCollectionType());
         Intent intent;
-        switch (baseItem.getCollectionType()) {
+        String collectionType = baseItem.getCollectionType() != null ? baseItem.getCollectionType() : "unknown";
+        switch (collectionType) {
             case CollectionType.Movies:
             case CollectionType.TvShows:
                 LibraryPreferences displayPreferences = KoinJavaComponent.<PreferencesRepository>get(PreferencesRepository.class).getLibraryPreferences(baseItem.getDisplayPreferencesId());
@@ -250,7 +251,7 @@ public class ItemLauncher {
             case Person:
                 //Start details fragment
                 Intent intent = new Intent(activity, FullDetailsActivity.class);
-                intent.putExtra("ItemId", rowItem.getPerson().getId());
+                intent.putExtra("ItemId", rowItem.getPerson().getId().toString());
                 if (noHistory) {
                     intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
                 }
