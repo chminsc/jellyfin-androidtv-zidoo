@@ -4,4 +4,8 @@
     <integer name="button_fade_duration">200</integer>
     <integer name="input_fade_duration">200</integer>
     <integer name="card_scale_duration">150</integer>
+    <integer name="card_focus_duration">150</integer>
+
+<!--    Determines the default row_size -> card size. So we want to see those many rows in fullscreen -->
+    <integer name="default_card_rows_per_screen">3</integer>
 </resources>
