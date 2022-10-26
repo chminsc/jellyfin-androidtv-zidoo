@@ -1,11 +1,12 @@
-package org.jellyfin.androidtv.ui.shared
+package org.jellyfin.androidtv.ui
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
+import androidx.annotation.ColorInt
 import androidx.appcompat.widget.AppCompatTextView
-import androidx.core.content.ContextCompat
 import org.jellyfin.androidtv.R
 
 class StrokeTextView @JvmOverloads constructor(
@@ -13,29 +14,34 @@ class StrokeTextView @JvmOverloads constructor(
 	attrs: AttributeSet? = null,
 	defStyleAttr: Int = 0,
 ) : AppCompatTextView(context, attrs, defStyleAttr) {
-	var strokeWidth = 0.0f
+	var strokeWidth: Float
+	@ColorInt var strokeColor: Int
 	private var isDrawing: Boolean = false
 
 	init {
-		val styledAttrs = context.obtainStyledAttributes(attrs, R.styleable.StrokeTextView)
-		strokeWidth = styledAttrs.getFloat(R.styleable.StrokeTextView_strokeWidth, 0.0f)
-		styledAttrs.recycle()
+		context.obtainStyledAttributes(attrs, R.styleable.StrokeTextView, defStyleAttr, 0).run {
+			strokeWidth = getFloat(R.styleable.StrokeTextView_strokeWidth, 0.0f)
+			strokeColor = getColor(R.styleable.StrokeTextView_strokeColor, Color.BLACK)
+			recycle()
+		}
 	}
 
 	override fun invalidate() {
 		// To prevent infinite call of onDraw because setTextColor calls invalidate()
-		if (isDrawing) return
+		if (isDrawing)
+			return
 		super.invalidate()
 	}
 
 	override fun onDraw(canvas: Canvas?) {
-		if (strokeWidth <= 0) return super.onDraw(canvas)
+		if (strokeWidth <= 0)
+			return super.onDraw(canvas)
 		isDrawing = true
 		val initialColor = textColors
 
 		paint.style = Paint.Style.STROKE
 		paint.strokeWidth = strokeWidth
-		setTextColor(ContextCompat.getColor(context, R.color.black))
+		setTextColor(strokeColor)
 		super.onDraw(canvas)
 
 		paint.style = Paint.Style.FILL
