@@ -1,69 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<org.jellyfin.androidtv.ui.LinearLayoutAbs
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/toolbar_root"
-    android:layout_width="match_parent"
-    android:layout_height="95dp">
 
-    <LinearLayout
-        android:id="@+id/toolbar_start"
+    android:id="@+id/toolbar_root"
+    app:heightPct="@fraction/toolbar_layout_height_pct"
+    android:layout_height="0dp"
+    android:layout_width="wrap_content"
+
+    android:layout_alignParentTop="true"
+    android:layout_alignParentEnd="true"
+
+    android:layout_gravity="top|end"
+    android:gravity="center_vertical|end"
+    tools:background="@color/grey"
+    >
+
+    <org.jellyfin.androidtv.ui.NowPlayingView
+        android:id="@+id/npBug"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
-        android:layout_marginStart="48dp"
-        android:layout_marginTop="27dp"
-        android:layout_marginBottom="27dp"
-        android:gravity="start"
-        android:orientation="horizontal"
-        app:layout_constraintEnd_toStartOf="@+id/toolbar_content"
-        app:layout_constraintStart_toStartOf="parent">
-
-        <ImageView
-            android:id="@+id/toolbar_logo"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:adjustViewBounds="true"
-            android:scaleType="centerCrop"
-            android:src="@drawable/app_logo" />
-    </LinearLayout>
+        android:layout_marginStart="10dp"
+        android:layout_marginVertical="1dp"
+        tools:visibility="visible"
+        />
 
     <LinearLayout
         android:id="@+id/toolbar_content"
-        android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_marginTop="27dp"
-        android:layout_marginBottom="27dp"
-        android:gravity="bottom"
-        android:orientation="horizontal"
-        android:paddingStart="24dp"
-        app:layout_constraintEnd_toStartOf="@id/toolbar_end"
-        app:layout_constraintStart_toEndOf="@id/toolbar_start"
-        tools:ignore="RtlSymmetry" />
-
-    <LinearLayout
-        android:id="@+id/toolbar_end"
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_marginTop="27dp"
-        android:layout_marginEnd="48dp"
-        android:layout_marginBottom="27dp"
-        android:gravity="end"
         android:orientation="horizontal"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toEndOf="@+id/toolbar_content">
+        android:layout_marginStart="10dp"
+        android:layout_marginVertical="1dp"
+        tools:layout_width="120dp"
+        tools:background="@color/red"
+        tools:visibility="visible"
+        />
 
-        <TextClock
-            android:id="@+id/toolbar_clock"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical"
-            android:fontFamily="sans-serif-light"
-            android:format12Hour="h:mm"
-            android:format24Hour="k:mm"
-            android:paddingStart="24dp"
-            android:textSize="20sp"
-            tools:text="13:37"
-            tools:ignore="RtlSymmetry" />
-    </LinearLayout>
+    <org.jellyfin.androidtv.ui.ClockUserView
+        android:id="@+id/toolbar_clock"
+        android:layout_height="match_parent"
+        android:layout_width="wrap_content"
+        android:layout_marginStart="10dp"
+        tools:background="@color/midnight_blue"
+        tools:visibility="visible"
+        />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</org.jellyfin.androidtv.ui.LinearLayoutAbs>
