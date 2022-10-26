@@ -4,7 +4,9 @@ import android.os.Build;
 
 import androidx.annotation.NonNull;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class DeviceUtils {
     // Chromecast with Google TV
@@ -33,16 +35,43 @@ public class DeviceUtils {
 
     private static final String UNKNOWN = "Unknown";
 
+    private static final HashMap<String, String> sSystemPropertyMap = new HashMap<String, String>();
+
     @NonNull
     static String getBuildModel() {
-        // Stub to allow for mock injection
         return Build.MODEL != null ? Build.MODEL : UNKNOWN;
     }
 
     @NonNull
     static String getBrand() {
-        // Stub to allow for mock injection
         return Build.BRAND != null ? Build.BRAND : UNKNOWN;
+    }
+
+    @NonNull
+    static String getManufacturer() {
+        return Build.MANUFACTURER != null ? Build.MANUFACTURER : UNKNOWN;
+    }
+
+    private static String getSystemPropertyCached(String key) {
+        String prop = sSystemPropertyMap.get(key);
+        if (prop == null) {
+            prop = getSystemProperty(key, "none");
+            sSystemPropertyMap.put(key, prop);
+        }
+        return prop;
+    }
+
+    private static String getSystemProperty(String key, String def) {
+        try {
+            final ClassLoader cl = ClassLoader.getSystemClassLoader();
+            final Class<?> SystemProperties = cl.loadClass("android.os.SystemProperties");
+            final Class<?>[] paramTypes = new Class[] { String.class, String.class };
+            final Method get = SystemProperties.getMethod("get", paramTypes);
+            final Object[] params = new Object[] { key, def };
+            return (String) get.invoke(SystemProperties, params);
+        } catch (Exception e){
+            return def;
+        }
     }
 
     public static boolean isChromecastWithGoogleTV() {
@@ -71,7 +100,26 @@ public class DeviceUtils {
     }
 
     public static boolean isZidooRTK() {
-        return getBuildModel().equals(ZIDOO_MANUFACTURER) && getBrand().equals("rtk");
+        return getManufacturer().equals(ZIDOO_MANUFACTURER) && getBrand().equals("rtk");
+    }
+
+    public static boolean hasNewZidooApi() {
+        if (getManufacturer().equals(ZIDOO_MANUFACTURER)) {
+            // "v6.4.42" and "v6.7.30" older "v2.3.88"
+            String version = getSystemPropertyCached("ro.product.version").replaceFirst("v", "");
+            final String[] splitArray = version.split("\\.", 3);
+            if (splitArray.length == 3) {
+                try {
+                    int majorV = Integer.parseInt(splitArray[0]);
+                    int middleV = Integer.parseInt(splitArray[1]);
+                    int minorV = Integer.parseInt(splitArray[2]);
+                    if (majorV == 6 && (middleV == 4 || middleV == 7) && minorV >= 30)
+                        return true;
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+        return false;
     }
 
     public static boolean has4kVideoSupport() {
