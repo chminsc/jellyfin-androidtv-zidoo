@@ -1,11 +1,11 @@
 package org.jellyfin.androidtv.ui.preference
 
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.os.bundleOf
-import androidx.fragment.app.FragmentActivity
 import org.jellyfin.androidtv.ui.preference.screen.UserPreferencesScreen
 
-class PreferencesActivity : FragmentActivity() {
+class PreferencesActivity : AppCompatActivity() {
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
