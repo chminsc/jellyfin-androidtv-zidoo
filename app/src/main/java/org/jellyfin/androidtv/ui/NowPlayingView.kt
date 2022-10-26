@@ -7,7 +7,6 @@ import android.view.LayoutInflater
 import android.widget.FrameLayout
 import androidx.core.content.ContextCompat
 import androidx.core.view.isVisible
-import androidx.core.view.setPadding
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.databinding.ViewNowPlayingBinding
 import org.jellyfin.androidtv.ui.playback.AudioEventListener
@@ -25,7 +24,7 @@ class NowPlayingView @JvmOverloads constructor(
 	context: Context,
 	attrs: AttributeSet? = null,
 	defStyleAttr: Int = 0,
-	defStyleRes: Int = R.style.Button_Default,
+	defStyleRes: Int = 0,
 ) : FrameLayout(context, attrs, defStyleAttr, defStyleRes), KoinComponent {
 	val binding = ViewNowPlayingBinding.inflate(LayoutInflater.from(context), this, true)
 
@@ -33,8 +32,6 @@ class NowPlayingView @JvmOverloads constructor(
 	private var currentDuration: String = ""
 
 	init {
-		setPadding(0)
-
 		if (!isInEditMode) setOnClickListener {
 			val intent = Intent(context, AudioNowPlayingActivity::class.java)
 			context.startActivity(intent)
