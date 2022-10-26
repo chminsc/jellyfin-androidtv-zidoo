@@ -35,7 +35,8 @@ public class BrowseRowDef {
     private SeasonQuery seasonQuery;
     private QueryType queryType;
 
-    private int chunkSize = 0;
+    public int chunkSize = 0;
+    public boolean filterWatched = false;
 
     private ChangeTriggerType[] changeTriggers;
 
@@ -141,10 +142,6 @@ public class BrowseRowDef {
         this.queryType = QueryType.Views;
     }
 
-    public int getChunkSize() {
-        return chunkSize;
-    }
-
     public String getHeaderText() {
         return headerText;
     }
@@ -199,6 +196,11 @@ public class BrowseRowDef {
 
     public BrowseRowDef setChunkSize(int chunkSize) {
         this.chunkSize = chunkSize;
+        return this;
+    }
+
+    public BrowseRowDef setFilterPlayed() {
+        filterWatched = true;
         return this;
     }
 }
