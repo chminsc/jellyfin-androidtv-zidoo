@@ -1,13 +1,17 @@
 package org.jellyfin.androidtv.ui.preference.screen
 
 import org.jellyfin.androidtv.R
+import org.jellyfin.androidtv.constant.CardInfoType
 import org.jellyfin.androidtv.constant.HomeSectionType
+import org.jellyfin.androidtv.constant.HomeSize
 import org.jellyfin.androidtv.preference.UserSettingPreferences
-import org.jellyfin.androidtv.preference.UserSettingPreferences.Companion.homeScalingFactor
-import org.jellyfin.androidtv.preference.UserSettingPreferences.Companion.homeScalingFactorMyMedia
+import org.jellyfin.androidtv.preference.UserSettingPreferences.Companion.cardInfoType
+import org.jellyfin.androidtv.preference.UserSettingPreferences.Companion.homeSize
 import org.jellyfin.androidtv.preference.UserSettingPreferences.Companion.seriesThumbnailsEnabled
-import org.jellyfin.androidtv.ui.preference.custom.DurationSeekBarPreference
-import org.jellyfin.androidtv.ui.preference.dsl.*
+import org.jellyfin.androidtv.ui.preference.dsl.OptionsFragment
+import org.jellyfin.androidtv.ui.preference.dsl.checkbox
+import org.jellyfin.androidtv.ui.preference.dsl.enum
+import org.jellyfin.androidtv.ui.preference.dsl.optionsScreen
 import org.jellyfin.preference.store.PreferenceStore
 import org.koin.android.ext.android.inject
 
@@ -23,34 +27,20 @@ class HomePreferencesScreen : OptionsFragment() {
 		category {
 			setTitle(R.string.home_section_settings)
 
+			enum<HomeSize> {
+				title = getString(R.string.pref_home_size)
+				bind(userSettingPreferences, homeSize)
+			}
+
 			checkbox {
 				setTitle(R.string.lbl_use_series_thumbnails)
 				setContent(R.string.lbl_use_series_thumbnails_description)
 				bind(userSettingPreferences, seriesThumbnailsEnabled)
 			}
 
-			@Suppress("MagicNumber")
-			seekbar {
-				setTitle(R.string.pref_home_ui_scaleing)
-				min = 30
-				max = 130
-				increment = 10
-				valueFormatter = object : DurationSeekBarPreference.ValueFormatter() {
-					override fun display(value: Int) = "${value}%"
-				}
-				bind(userSettingPreferences, homeScalingFactor)
-			}
-
-			@Suppress("MagicNumber")
-			seekbar {
-				setTitle(R.string.pref_home_ui_scaleing_media)
-				min = 30
-				max = 130
-				increment = 10
-				valueFormatter = object : DurationSeekBarPreference.ValueFormatter() {
-					override fun display(value: Int) = "${value}%"
-				}
-				bind(userSettingPreferences, homeScalingFactorMyMedia)
+			enum<CardInfoType> {
+				title = getString(R.string.lbl_card_info_style)
+				bind(userSettingPreferences, cardInfoType)
 			}
 		}
 
