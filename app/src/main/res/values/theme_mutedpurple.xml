@@ -1,30 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <color name="theme_muted_purple_accent">#627EC8</color>
+    <color name="theme_muted_purple">#627EC8</color>
     <color name="light_grey_transparent">#2EAAAAAA</color>
 
+    <color name="theme_muted_purple_light">#7091E5</color>
+    <color name="theme_muted_purple_dark">#182033</color>
+    <color name="theme_muted_purple_nearly_black">#0C1019</color>
+    <color name="theme_muted_purple_black">#000000</color>
+
     <style name="Theme.Jellyfin.MutedPurple" parent="Theme.Jellyfin">
+
         <!-- Colors -->
-        <item name="android:colorAccent">@color/theme_muted_purple_accent</item>
-        <item name="defaultSearchColor">@color/theme_muted_purple_accent</item>
-        <item name="progressPrimary">@color/theme_muted_purple_accent</item>
+        <item name="android:colorPrimary">@color/theme_muted_purple_dark</item>
+        <item name="android:colorPrimaryDark">@color/theme_muted_purple_dark</item>
+        <item name="android:windowBackground">@color/theme_muted_purple_nearly_black</item>
+        <item name="android:colorAccent">@color/theme_muted_purple</item>
+        <item name="defaultSearchColor">@color/theme_muted_purple</item>
+        <item name="progressPrimary">@color/theme_muted_purple</item>
         <item name="android:colorButtonNormal">@color/light_grey_transparent</item>
         <item name="buttonDefaultNormalBackground">@color/light_grey_transparent</item>
-        <item name="buttonDefaultHighlightBackground">@color/theme_muted_purple_accent</item>
+        <item name="buttonDefaultHighlightBackground">@color/theme_muted_purple</item>
         <item name="popupMenuBackground">#384873</item>
 
         <!-- Control icons -->
-        <item name="controlIconForegroundActive">@color/theme_muted_purple_accent</item>
+        <item name="controlIconForegroundActive">@color/theme_muted_purple</item>
 
         <!-- QR drawables -->
-        <item name="qrForeground">@color/theme_muted_purple_accent</item>
-
-        <!-- Rounding Values -->
-        <item name="cardRounding">5dp</item>
-        <item name="buttonRounding">7dp</item>
-        <item name="inputRounding">7dp</item>
-        <item name="popupMenuRounding">7dp</item>
+        <item name="qrForeground">@color/theme_muted_purple</item>
 
         <!-- Watched Indicator Shape -->
         <item name="accentShape">@drawable/square_accent</item>

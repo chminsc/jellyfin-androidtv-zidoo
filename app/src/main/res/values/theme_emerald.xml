@@ -3,17 +3,17 @@
 
     <color name="theme_emerald_light">#52B54B</color>
     <color name="theme_emerald_dark">#051802</color>
+    <color name="theme_emerald_nearly_black">#020C01</color>
     <color name="theme_emerald_black">#000000</color>
 
     <style name="Theme.Jellyfin.Emerald" parent="Theme.Jellyfin">
         <item name="android:colorPrimary">@color/theme_emerald_dark</item>
         <item name="android:colorPrimaryDark">@color/theme_emerald_dark</item>
         <item name="android:colorAccent">@color/theme_emerald_light</item>
-        <item name="android:windowBackground">@drawable/moviebg</item>
+        <item name="android:windowBackground">@color/not_quite_black</item>
         <item name="defaultSearchColor">@color/theme_emerald_light</item>
         <item name="progressPrimary">@color/theme_emerald_light</item>
         <item name="progressSecondary">@color/theme_emerald_dark</item>
-        <item name="toolbarBackground">@color/theme_emerald_black</item>
         <item name="popupMenuBackground">@color/theme_emerald_black</item>
 
         <!-- Control icons -->
