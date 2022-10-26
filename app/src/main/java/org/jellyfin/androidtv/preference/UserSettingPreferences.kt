@@ -1,6 +1,8 @@
 package org.jellyfin.androidtv.preference
 
+import org.jellyfin.androidtv.constant.CardInfoType
 import org.jellyfin.androidtv.constant.HomeSectionType
+import org.jellyfin.androidtv.constant.HomeSize
 import org.jellyfin.androidtv.preference.store.DisplayPreferencesStore
 import org.jellyfin.preference.booleanPreference
 import org.jellyfin.preference.enumPreference
@@ -20,16 +22,16 @@ class UserSettingPreferences(
 
 		var seriesThumbnailsEnabled = booleanPreference("pref_enable_series_thumbnails", true)
 
-		val homeScalingFactor = intPreference("homeScalingFactor", 100)
-		val homeScalingFactorMyMedia = intPreference("homeScalingFactorMyMedia", 100)
-
 		val homesection0 = enumPreference("homesection0", HomeSectionType.LIBRARY_TILES_SMALL)
 		val homesection1 = enumPreference("homesection1", HomeSectionType.RESUME)
-		val homesection2 = enumPreference("homesection2", HomeSectionType.RESUME_AUDIO)
-		val homesection3 = enumPreference("homesection3", HomeSectionType.RESUME_BOOK)
-		val homesection4 = enumPreference("homesection4", HomeSectionType.LIVE_TV)
-		val homesection5 = enumPreference("homesection5", HomeSectionType.NEXT_UP)
-		val homesection6 = enumPreference("homesection6", HomeSectionType.LATEST_MEDIA)
+		val homesection2 = enumPreference("homesection2", HomeSectionType.NEXT_UP)
+		val homesection3 = enumPreference("homesection3", HomeSectionType.LATEST_MEDIA)
+		val homesection4 = enumPreference("homesection4", HomeSectionType.NONE)
+		val homesection5 = enumPreference("homesection5", HomeSectionType.NONE)
+		val homesection6 = enumPreference("homesection6", HomeSectionType.NONE)
+
+		val homeSize = enumPreference("homeSize", HomeSize.MEDIUM)
+		val cardInfoType = enumPreference("homeCardInfoType", CardInfoType.UNDER_FULL)
 	}
 
 	val homesections
@@ -42,7 +44,7 @@ class UserSettingPreferences(
 				this[skipBackLength].hashCode() +
 				this[skipForwardLength].hashCode() +
 				this[seriesThumbnailsEnabled].hashCode() +
-				this[homeScalingFactor].hashCode() +
-				this[homeScalingFactorMyMedia].hashCode()
+				this[homeSize].hashCode() +
+				this[cardInfoType].hashCode()
 	}
 }
