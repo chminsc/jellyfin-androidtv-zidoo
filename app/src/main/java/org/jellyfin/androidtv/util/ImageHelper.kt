@@ -1,23 +1,54 @@
 package org.jellyfin.androidtv.util
 
+import android.content.Context
+import com.bumptech.glide.Glide
+import com.bumptech.glide.Priority
+import com.bumptech.glide.request.target.Target.SIZE_ORIGINAL
+import me.carleslc.kotlin.extensions.standard.letIfTrue
+import org.jellyfin.androidtv.JellyfinApplication
 import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.extensions.imageApi
 import org.jellyfin.sdk.model.api.*
 import org.jellyfin.sdk.model.serializer.toUUID
 import org.jellyfin.sdk.model.serializer.toUUIDOrNull
+import timber.log.Timber
 import java.util.*
 
-class ImageHelper(
-	private val api: ApiClient,
-) {
-	fun getPrimaryImageUrl(item: BaseItemPerson, maxHeight: Int = ImageUtils.MAX_PRIMARY_IMAGE_HEIGHT): String? {
+class ImageHelper(private val api: ApiClient)
+{
+	companion object {
+		private val imageCache: MutableSet<Int> = HashSet(200)
+
+		val MAX_IMAGE_HEIGHT get() = JellyfinApplication.appContext.resources.displayMetrics.heightPixels
+		val MAX_AUTO_IMAGE_HEIGHT get() = JellyfinApplication.appContext.resources.displayMetrics.heightPixels.div(2)
+		val MAX_PRIMARY_IMAGE_HEIGHT get() = JellyfinApplication.appContext.resources.displayMetrics.heightPixels.div(2)
+
+		const val DEFAULT_IMAGE_QUALITY = 90
+		const val DEFAULT_BACKDROP_IMAGE_QUALITY = 80 // up-to 30-80% reduced size, server converts org. jpg to webp (NOTE: sometimes jpg is smaller....)
+
+		fun checkImageUrl(url: String?): String? {
+			if (url.isNullOrEmpty())
+				return null
+
+			var checkedUrl = url
+			if (!checkedUrl.contains("Height=", true) && !checkedUrl.contains("Width=", true))
+				checkedUrl += ("&maxHeight=$MAX_AUTO_IMAGE_HEIGHT")
+			if (!checkedUrl.contains("Quality=", true))
+				checkedUrl += ("&Quality=$DEFAULT_IMAGE_QUALITY")
+
+			return checkedUrl
+		}
+	}
+
+	fun getPrimaryImageUrl(item: BaseItemPerson, maxHeight: Int?): String? {
 		if (item.primaryImageTag == null) return null
 
 		return api.imageApi.getItemImageUrl(
 			itemId = item.id,
 			imageType = ImageType.PRIMARY,
-			maxHeight = maxHeight,
+			maxHeight = maxHeight?.coerceAtMost(MAX_IMAGE_HEIGHT),
 			tag = item.primaryImageTag,
+			quality = DEFAULT_IMAGE_QUALITY
 		)
 	}
 
@@ -28,20 +59,21 @@ class ImageHelper(
 			userId = item.id,
 			imageType = ImageType.PRIMARY,
 			tag = item.primaryImageTag,
-			maxHeight = ImageUtils.MAX_PRIMARY_IMAGE_HEIGHT,
+			maxHeight = MAX_PRIMARY_IMAGE_HEIGHT,
+			quality = DEFAULT_IMAGE_QUALITY
 		)
 	}
 
 	fun getPrimaryImageUrl(item: BaseItemDto): String? {
-		return getImageUrl(item, ImageType.PRIMARY, true, ImageUtils.MAX_PRIMARY_IMAGE_HEIGHT, null, false, false, false)
+		return getImageUrl(item, ImageType.PRIMARY, true, MAX_PRIMARY_IMAGE_HEIGHT, null, false, false, false)
 	}
 
-	fun getPrimaryImageUrl(item: BaseItemDto, maxHeight: Int): String? {
-		return getImageUrl(item, ImageType.PRIMARY, true, maxHeight, null, false, false, false)
+	fun getPrimaryImageUrl(item: BaseItemDto, maxHeight: Int?): String? {
+		return getImageUrl(item, ImageType.PRIMARY, true, maxHeight ?: MAX_PRIMARY_IMAGE_HEIGHT, null, false, false, false)
 	}
 
-	fun getPrimaryImageUrl(item: BaseItemDto, maxHeight: Int, maxWidth: Int): String? {
-		return getImageUrl(item, ImageType.PRIMARY, true, maxHeight, maxWidth, false, false, false)
+	fun getPrimaryImageUrl(item: BaseItemDto, maxHeight: Int?, maxWidth: Int?): String? {
+		return getImageUrl(item, ImageType.PRIMARY, true, maxHeight ?: MAX_PRIMARY_IMAGE_HEIGHT, maxWidth, false, false, false)
 	}
 
 	fun getImageUrl(itemId: String, imageType: ImageType, imageTag: String, maxHeight: Int?): String? = itemId.toUUIDOrNull()?.let { itemUuid ->
@@ -53,7 +85,8 @@ class ImageHelper(
 			itemId = itemId,
 			imageType = imageType,
 			tag = imageTag,
-			maxHeight = maxHeight
+			maxHeight = maxHeight?.coerceAtMost(MAX_IMAGE_HEIGHT),
+			quality = DEFAULT_IMAGE_QUALITY
 		)
 	}
 
@@ -144,7 +177,8 @@ class ImageHelper(
 			imageType = imageType,
 			tag = imageTag,
 			maxWidth = maxWidth,
-			maxHeight = maxHeight,
+			maxHeight = maxHeight?.coerceAtMost(MAX_IMAGE_HEIGHT),
+			quality = DEFAULT_IMAGE_QUALITY
 		)
 	}
 
@@ -157,9 +191,35 @@ class ImageHelper(
 		return api.imageApi.getItemImageUrl(
 			itemId = itemId,
 			imageType = imageType,
-			maxHeight = maxHeight,
+			maxHeight = maxHeight?.coerceAtMost(MAX_IMAGE_HEIGHT),
 			format = imageFormat,
 			blur = blur,
+			quality = DEFAULT_IMAGE_QUALITY
 		)
+	}
+
+	// NOTE: we only want to make sure the data are loaded at least into diskcache
+	fun preCacheImages(context: Context, urls: Iterable<String>, height: Int = SIZE_ORIGINAL, width: Int = SIZE_ORIGINAL) {
+		val loadList = buildList {
+			urls.forEach {
+				checkImageUrl(it)?.let { checkedUrl ->
+					if (!imageCache.contains(checkedUrl.hashCode())) {
+						this.add(checkedUrl)
+						imageCache.add(checkedUrl.hashCode())
+					}
+				}
+			}
+		}
+
+		loadList.isNotEmpty().letIfTrue {
+			loadList.forEach {
+				Timber.d("Preload url: <%s>", it)
+				Glide.with(context)
+					.load(it)
+					.priority(Priority.LOW)
+					.centerCrop()
+					.preload(width, height)
+			}
+		}
 	}
 }
