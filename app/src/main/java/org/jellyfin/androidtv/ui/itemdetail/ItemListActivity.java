@@ -13,15 +13,13 @@ import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.PopupMenu;
-import android.widget.RelativeLayout;
-import android.widget.ScrollView;
 import android.widget.TextView;
 
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-import androidx.fragment.app.FragmentActivity;
+import androidx.core.widget.NestedScrollView;
 
 import org.jellyfin.androidtv.R;
 import org.jellyfin.androidtv.auth.repository.UserRepository;
@@ -31,6 +29,7 @@ import org.jellyfin.androidtv.data.service.BackgroundService;
 import org.jellyfin.androidtv.databinding.ActivityItemListBinding;
 import org.jellyfin.androidtv.databinding.ViewRowDetailsBinding;
 import org.jellyfin.androidtv.ui.AsyncImageView;
+import org.jellyfin.androidtv.ui.InfoRowView;
 import org.jellyfin.androidtv.ui.ItemListView;
 import org.jellyfin.androidtv.ui.ItemRowView;
 import org.jellyfin.androidtv.ui.TextUnderButton;
@@ -41,7 +40,6 @@ import org.jellyfin.androidtv.ui.playback.MediaManager;
 import org.jellyfin.androidtv.ui.playback.PlaybackController;
 import org.jellyfin.androidtv.ui.playback.PlaybackLauncher;
 import org.jellyfin.androidtv.util.ImageUtils;
-import org.jellyfin.androidtv.util.InfoLayoutHelper;
 import org.jellyfin.androidtv.util.Utils;
 import org.jellyfin.androidtv.util.apiclient.BaseItemUtils;
 import org.jellyfin.androidtv.util.apiclient.PlaybackHelper;
@@ -69,10 +67,11 @@ import java.util.Random;
 import kotlin.Lazy;
 import timber.log.Timber;
 
-public class ItemListActivity extends FragmentActivity {
+public class ItemListActivity extends AppCompatActivity {
     private int BUTTON_SIZE;
-    public static final String FAV_SONGS = "FAV_SONGS";
-    public static final String VIDEO_QUEUE = "VIDEO_QUEUE";
+    // Use fake UUID's to avoid crashing when converting to SDK
+    public static final String FAV_SONGS = "11111111-0000-0000-0000-000000000001";
+    public static final String VIDEO_QUEUE = "11111111-0000-0000-0000-000000000002";
 
     private TextView mTitle;
     private TextView mGenreRow;
@@ -80,7 +79,7 @@ public class ItemListActivity extends FragmentActivity {
     private TextView mSummary;
     private LinearLayout mButtonRow;
     private ItemListView mItemList;
-    private ScrollView mScrollView;
+    private NestedScrollView mScrollView;
     private ItemRowView mCurrentRow;
 
     private ItemRowView mCurrentlyPlayingRow;
@@ -122,9 +121,9 @@ public class ItemListActivity extends FragmentActivity {
         mScrollView = binding.scrollView;
 
         //adjust left frame
-        RelativeLayout leftFrame = detailsBinding.leftFrame;
-        ViewGroup.LayoutParams params = leftFrame.getLayoutParams();
-        params.width = Utils.convertDpToPixel(this,100);
+//        RelativeLayout leftFrame = detailsBinding.leftFrame;
+//        ViewGroup.LayoutParams params = leftFrame.getLayoutParams();
+//        params.width = Utils.convertDpToPixel(this,100);
 
 
         mMetrics = new DisplayMetrics();
@@ -363,12 +362,15 @@ public class ItemListActivity extends FragmentActivity {
                 setBaseItem(queue);
                 break;
             default:
-                apiClient.getValue().GetItemAsync(id, KoinJavaComponent.<UserRepository>get(UserRepository.class).getCurrentUser().getValue().getId().toString(), new Response<BaseItemDto>() {
-                    @Override
-                    public void onResponse(BaseItemDto response) {
-                        setBaseItem(response);
-                    }
-                });
+                var user = KoinJavaComponent.<UserRepository>get(UserRepository.class).getCurrentUser().getValue();
+                if (user != null) {
+                    apiClient.getValue().GetItemAsync(id, user.getId().toString(), new Response<BaseItemDto>() {
+                        @Override
+                        public void onResponse(BaseItemDto response) {
+                            setBaseItem(response);
+                        }
+                    });
+                }
                 break;
         }
     }
@@ -376,9 +378,9 @@ public class ItemListActivity extends FragmentActivity {
     public void setBaseItem(BaseItemDto item) {
         mBaseItem = item;
 
-        LinearLayout mainInfoRow = (LinearLayout)findViewById(R.id.fdMainInfoRow);
+        InfoRowView mainInfoRow = findViewById(R.id.fdMainInfoRow);
+        mainInfoRow.setBaseItem(ModelCompat.asSdk(item));
 
-        InfoLayoutHelper.addInfoRow(this, ModelCompat.asSdk(item), mainInfoRow, false, false);
         addGenres(mGenreRow);
         addButtons(BUTTON_SIZE);
         mSummary.setText(mBaseItem.getOverview());
