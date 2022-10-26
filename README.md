@@ -34,13 +34,13 @@ TIP: you can directly install from your browser via `http://zidoo_ip:18888` web 
     - seekable transcode playback
     - add atmos, dv logos
     - ~improve layouts~ _done_
-    - small useability improvements _(smart screen views)_
-      - focus selection border
-      - add missing vertical-grid features _(genre)_
+    - ~small useability improvements _(smart screen views)_~ _done
+      - ~focus selection border~ _done_
+      - ~add missing vertical-grid features _(genre)_~ _done_
     - working support for trailer/intro plugin's
     - ~use new Android API from latest beta FW~ _done_
     - script hotkey action's _(xml kodi compatible)_
-    - fix all NFS mount cases
+    - ~fix all NFS mount cases~ _done_
 ### Added Features/Fixes:
  - Playback integration with the internal Zidoo player
    - working resume, seek, watched states and server playback reporting 
