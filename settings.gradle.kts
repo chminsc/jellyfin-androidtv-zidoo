@@ -38,6 +38,9 @@ dependencyResolutionManagement {
 			content {
 				// Only allow legacy apiclient
 				includeVersionByRegex("com.github.jellyfin.jellyfin-sdk-kotlin", ".*", "v0.7.10")
+				// some helpers
+				includeVersionByRegex("com.github.carleslc", "kotlin-extensions", ".*")
+				includeVersionByRegex("com.github.cesarferreira", "kotlin-pluralizer", ".*")
 			}
 		}
 	}
