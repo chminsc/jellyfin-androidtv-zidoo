@@ -41,6 +41,8 @@ import org.jellyfin.apiclient.interaction.ApiClient;
 import org.jellyfin.apiclient.interaction.EmptyResponse;
 import org.jellyfin.apiclient.interaction.Response;
 import org.jellyfin.apiclient.model.dto.BaseItemDto;
+import org.jellyfin.apiclient.model.dto.BaseItemType;
+import org.jellyfin.apiclient.model.entities.LocationType;
 import org.jellyfin.apiclient.model.livetv.ChannelInfoDto;
 import org.jellyfin.apiclient.model.livetv.LiveTvChannelQuery;
 import org.jellyfin.apiclient.model.livetv.RecommendedProgramQuery;
@@ -67,6 +69,7 @@ import org.jellyfin.sdk.model.api.UserDto;
 import org.jellyfin.sdk.model.constant.ItemSortBy;
 import org.koin.java.KoinJavaComponent;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
@@ -341,36 +344,30 @@ public class ItemRowAdapter extends ArrayObjectAdapter {
 
     @NonNull
     public static ItemRowAdapter buildItemRowAdapter(@NonNull Context context, @NonNull BrowseRowDef def, @NonNull Presenter presenter, @NonNull PresenterSelector presenterSelector, @Nullable ArrayObjectAdapter parent) {
-        switch (def.getQueryType()) {
-            case AlbumArtists:
-                return new ItemRowAdapter(context, def.getArtistsQuery(), presenter, parent).setChunkSize(def.getChunkSize());
-            case NextUp:
-                return new ItemRowAdapter(context, def.getNextUpQuery(), presenter, parent).setChunkSize(def.getChunkSize());
-            case LatestItems:
-                return new ItemRowAdapter(context, def.getLatestItemsQuery(), presenter, parent).setChunkSize(def.getChunkSize());
-            case Season:
-                return new ItemRowAdapter(context, def.getSeasonQuery(), presenter, parent).setChunkSize(def.getChunkSize());
-            case Upcoming:
-                return new ItemRowAdapter(context, def.getUpcomingQuery(), presenter, parent).setChunkSize(def.getChunkSize());
-            case Views:
-                return new ItemRowAdapter(context, new ViewQuery(), presenter, parent).setChunkSize(def.getChunkSize());
-            case SimilarSeries:
-                return new ItemRowAdapter(context, def.getSimilarQuery(), QueryType.SimilarSeries, presenter, parent).setChunkSize(def.getChunkSize());
-            case SimilarMovies:
-                return new ItemRowAdapter(context, def.getSimilarQuery(), QueryType.SimilarMovies, presenter, parent).setChunkSize(def.getChunkSize());
-            case Persons:
-                return new ItemRowAdapter(context, def.getPersonsQuery(), presenter, parent).setChunkSize(def.getChunkSize());
-            case LiveTvChannel:
-                return new ItemRowAdapter(context, def.getTvChannelQuery(), presenter, parent).setChunkSize(def.getChunkSize());
-            case LiveTvProgram:
-                return new ItemRowAdapter(context, def.getProgramQuery(), presenter, parent).setChunkSize(def.getChunkSize());
-            case LiveTvRecording:
-                return new ItemRowAdapter(context, def.getRecordingQuery(), presenter, parent).setChunkSize(def.getChunkSize());
-            case SeriesTimer:
-                return new ItemRowAdapter(context, def.getSeriesTimerQuery(), presenter, parent).setChunkSize(def.getChunkSize());
-            default:
-                return new ItemRowAdapter(context, def.getQuery(), def.getQueryType(), presenterSelector, parent).setChunkSize(def.getChunkSize());
+        ItemRowAdapter adapter = switch (def.getQueryType()) {
+            case AlbumArtists -> new ItemRowAdapter(context, def.getArtistsQuery(), presenter, parent);
+            case NextUp -> new ItemRowAdapter(context, def.getNextUpQuery(), presenter, parent);
+            case LatestItems -> new ItemRowAdapter(context, def.getLatestItemsQuery(), presenter, parent);
+            case Season -> new ItemRowAdapter(context, def.getSeasonQuery(), presenter, parent);
+            case Upcoming -> new ItemRowAdapter(context, def.getUpcomingQuery(), presenter, parent);
+            case Views -> new ItemRowAdapter(context, new ViewQuery(), presenter, parent);
+            case SimilarSeries -> new ItemRowAdapter(context, def.getSimilarQuery(), QueryType.SimilarSeries, presenter, parent);
+            case SimilarMovies -> new ItemRowAdapter(context, def.getSimilarQuery(), QueryType.SimilarMovies, presenter, parent);
+            case Persons -> new ItemRowAdapter(context, def.getPersonsQuery(), presenter, parent);
+            case LiveTvChannel -> new ItemRowAdapter(context, def.getTvChannelQuery(), presenter, parent);
+            case LiveTvProgram -> new ItemRowAdapter(context, def.getProgramQuery(), presenter, parent);
+            case LiveTvRecording -> new ItemRowAdapter(context, def.getRecordingQuery(), presenter, parent);
+            case SeriesTimer -> new ItemRowAdapter(context, def.getSeriesTimerQuery(), presenter, parent);
+            default -> new ItemRowAdapter(context, def.getQuery(), def.getQueryType(), presenterSelector, parent);
+        };
+        adapter.setChunkSize(def.chunkSize);
+
+        if (def.filterWatched) {
+            FilterOptions filterOptions = new FilterOptions();
+            filterOptions.setUnwatchedOnly(true);
+            adapter.setFilters(filterOptions);
         }
+        return adapter;
     }
 
     public ItemRowAdapter setChunkSize(int size) {
@@ -598,33 +595,19 @@ public class ItemRowAdapter extends ArrayObjectAdapter {
         DataRefreshService dataRefreshService = KoinJavaComponent.get(DataRefreshService.class);
         for (ChangeTriggerType trigger : reRetrieveTriggers) {
             switch (trigger) {
-                case LibraryUpdated:
-                    retrieve |= lastFullRetrieve.getTimeInMillis() < dataRefreshService.getLastLibraryChange();
-                    break;
-                case MoviePlayback:
-                    retrieve |= lastFullRetrieve.getTimeInMillis() < dataRefreshService.getLastMoviePlayback();
-                    break;
-                case TvPlayback:
-                    retrieve |= lastFullRetrieve.getTimeInMillis() < dataRefreshService.getLastTvPlayback();
-                    break;
-                case MusicPlayback:
-                    retrieve |= lastFullRetrieve.getTimeInMillis() < dataRefreshService.getLastMusicPlayback();
-                    break;
-                case FavoriteUpdate:
-                    retrieve |= lastFullRetrieve.getTimeInMillis() < dataRefreshService.getLastFavoriteUpdate();
-                    break;
-                case VideoQueueChange:
-                    retrieve |= lastFullRetrieve.getTimeInMillis() < dataRefreshService.getLastVideoQueueChange();
-                    break;
-                case GuideNeedsLoad:
+                case LibraryUpdated -> retrieve |= lastFullRetrieve.getTimeInMillis() < dataRefreshService.getLastLibraryChange();
+                case MoviePlayback -> retrieve |= lastFullRetrieve.getTimeInMillis() < dataRefreshService.getLastMoviePlayback();
+                case TvPlayback -> retrieve |= lastFullRetrieve.getTimeInMillis() < dataRefreshService.getLastTvPlayback();
+                case MusicPlayback -> retrieve |= lastFullRetrieve.getTimeInMillis() < dataRefreshService.getLastMusicPlayback();
+                case FavoriteUpdate -> retrieve |= lastFullRetrieve.getTimeInMillis() < dataRefreshService.getLastFavoriteUpdate();
+                case VideoQueueChange -> retrieve |= lastFullRetrieve.getTimeInMillis() < dataRefreshService.getLastVideoQueueChange();
+                case GuideNeedsLoad -> {
                     Calendar start = new GregorianCalendar(TimeZone.getTimeZone("Z"));
                     start.set(Calendar.MINUTE, start.get(Calendar.MINUTE) >= 30 ? 30 : 0);
                     start.set(Calendar.SECOND, 0);
                     retrieve |= TvManager.programsNeedLoad(start);
-                    break;
-                case Always:
-                    retrieve = true;
-                    break;
+                }
+                case Always -> retrieve = true;
             }
         }
 
@@ -643,10 +626,13 @@ public class ItemRowAdapter extends ArrayObjectAdapter {
         itemsLoaded = 0;
         switch (queryType) {
             case Items:
-                // Fix for https://github.com/jellyfin/jellyfin/issues/8249
-                if (mSortBy != null && mFilters != null && mSortBy.contains(ItemSortBy.SeriesDatePlayed) && mFilters.isUnwatchedOnly()) {
+                if (mSortBy != null && mSortBy.contains(ItemSortBy.DateLastContentAdded) && Arrays.asList(mQuery.getIncludeItemTypes()).contains("Series")) {
+                    // Fix for broken DateLastContentAdded fir Series
+                    retrieveSeriesSortByLatest(mQuery);
+                } else if (mSortBy != null && mFilters != null && mSortBy.contains(ItemSortBy.SeriesDatePlayed) && mFilters.isUnwatchedOnly()) {
+                    // Fix for https://github.com/jellyfin/jellyfin/issues/8249
                     mQuery.setFilters(null);
-                    retrieve(mQuery, true);
+                    retrieve(mQuery);
                     setFilters(mFilters);
                 } else {
                     retrieve(mQuery);
@@ -857,24 +843,153 @@ public class ItemRowAdapter extends ArrayObjectAdapter {
         }
     }
 
-    private void retrieve(final ItemQuery query) {
-        retrieve(query, false);
+    private List<BaseItemDto> filterPlayed(@NonNull List<BaseItemDto> items) {
+        ArrayList<BaseItemDto> outList = new ArrayList<>(items.size());
+        for (BaseItemDto x : items) {
+            if (x.getUserData() != null) {
+                if (x.getUserData().getPlayed())
+                    continue;
+                if (x.getUserData().getUnplayedItemCount() != null && x.getUserData().getUnplayedItemCount() == 0)
+                    continue;
+            }
+            outList.add(x);
+        }
+
+        return outList;
     }
 
-    private void retrieve(final ItemQuery query, final boolean filterPlayed) {
+    private List<BaseItemDto> filterEmpty(@NonNull List<BaseItemDto> items) {
+        ArrayList<BaseItemDto> outList = new ArrayList<>(items.size());
+        for (BaseItemDto x : items) {
+            if (x.getIsPlaceHolder())
+                continue;
+            if (x.getMediaSourceCount() != null && x.getMediaSourceCount() == 0)
+                continue;
+            if (x.getChildCount() != null && x.getChildCount() == 0)
+                continue;
+            if (x.getLocationType() != null && x.getLocationType() == LocationType.Virtual)
+                continue;
+
+            outList.add(x);
+        }
+
+        return outList;
+    }
+
+    private List<BaseItemDto> sortSeriesListViaLatest(@NonNull List<BaseItemDto> seriesList, @NonNull List<BaseItemDto> latestList) {
+        ArrayList<BaseItemDto> outList = new ArrayList<>(seriesList.size());
+        for (BaseItemDto x : latestList) {
+            if (BaseItemType.Episode.equals(x.getBaseItemType())) {
+                seriesList.stream()
+                        .filter(series -> Utils.isNonEmpty(x.getSeriesId()) && x.getSeriesId().equals(series.getId()))
+                        .findFirst().ifPresent(outList::add);
+            } else if (BaseItemType.Series.equals(x.getBaseItemType())) {
+                seriesList.stream()
+                        .filter(series -> Utils.isNonEmpty(x.getId()) && x.getId().equals(series.getId()))
+                        .findFirst().ifPresent(outList::add);
+            }
+        }
+        for (BaseItemDto x : seriesList) {
+            if (Utils.isNonEmpty(x.getId())) {
+                if (outList.stream().noneMatch(out -> x.getId().equals(out.getId()))) {
+                    outList.add(x);
+                }
+            }
+        }
+
+        return outList;
+    }
+
+    private LatestItemsQuery convertToLatestEpisodeQuery(ItemQuery query) {
+        var latestQuery = new LatestItemsQuery();
+        latestQuery.setGroupItems(true);
+        latestQuery.setLimit(query.getLimit()); // TODO check startIndex
+        latestQuery.setUserId(query.getUserId());
+        latestQuery.setParentId(query.getParentId());
+        latestQuery.setIncludeItemTypes(new String[]{"Episode"});
+
+        return latestQuery;
+    }
+
+    // combined latest + Item
+    private void retrieveSeriesSortByLatest(final ItemQuery query) {
+        final var latestQuery = convertToLatestEpisodeQuery(query);
+        apiClient.getValue().GetLatestItems(latestQuery, new Response<BaseItemDto[]>() {
+            @Override
+            public void onResponse(BaseItemDto[] latestResponse) {
+                apiClient.getValue().GetItemsAsync(query, new Response<ItemsResult>() {
+                    @Override
+                    public void onResponse(ItemsResult response) {
+                        if (response.getItems() == null || response.getItems().length <= 0) {
+                            setTotalItems(0);
+                            removeRow();
+                            notifyRetrieveFinished();
+                            return;
+                        }
+
+                        List<BaseItemDto> items;
+                        if (latestResponse == null || latestResponse.length <= 0) {
+                            items = List.of(response.getItems());
+                        } else {
+                            items = sortSeriesListViaLatest(List.of(response.getItems()), List.of(latestResponse));
+                        }
+
+                        int totalItems = query.getEnableTotalRecordCount() ? response.getTotalRecordCount() : items.size();
+                        if (mFilters != null && mFilters.isUnwatchedOnly()) {
+                            int numItemsPreFilter = items.size();
+                            items = filterPlayed(items);
+                            totalItems -= (numItemsPreFilter - items.size());
+                        }
+                        if (mFilters != null && mFilters.isNoneEmptyOnly()) {
+                            int numItemsPreFilter = items.size();
+                            items = filterEmpty(items);
+                            totalItems -= (numItemsPreFilter - items.size());
+                        }
+                        setTotalItems(totalItems);
+                        int i = getItemsLoaded();
+                        int prevItems = i == 0 && size() > 0 ? size() : 0;
+                        for (BaseItemDto item : items) {
+                            add(new BaseRowItem(i++, item));
+                        }
+                        setItemsLoaded(i);
+                        if (i == 0) {
+                            removeRow();
+                        } else if (prevItems > 0) {
+                            // remove previous items as we re-retrieved
+                            // this is done this way instead of clearing the adapter to avoid bugs in the framework elements
+                            removeItems(0, prevItems);
+                        }
+
+                        notifyRetrieveFinished();
+                    }
+
+                    @Override
+                    public void onError(Exception exception) {
+                        Timber.e(exception, "Error retrieving items");
+                        removeRow();
+                        notifyRetrieveFinished(exception);
+                    }
+                });
+            }
+        });
+    }
+
+    private void retrieve(final ItemQuery query) {
         apiClient.getValue().GetItemsAsync(query, new Response<ItemsResult>() {
             @Override
             public void onResponse(ItemsResult response) {
                 if (response.getItems() != null && response.getItems().length > 0) {
                     int totalItems = query.getEnableTotalRecordCount() ? response.getTotalRecordCount() : response.getItems().length;
-                    BaseItemDto[] items = response.getItems();
-                    if (filterPlayed) {
-                        items = Arrays.stream(items).filter(x ->
-                                (x.getUserData() == null) || (!x.getUserData().getPlayed() &&
-                                    x.getUserData().getUnplayedItemCount() != null &&
-                                    x.getUserData().getUnplayedItemCount() > 0)
-                        ).toArray(BaseItemDto[]::new);
-                        totalItems = totalItems - (response.getItems().length - items.length);
+                    List<BaseItemDto> items = List.of(response.getItems());
+                    if (mFilters != null && mFilters.isUnwatchedOnly()) {
+                        int numItemsPreFilter = items.size();
+                        items = filterPlayed(items);
+                        totalItems -= (numItemsPreFilter - items.size());
+                    }
+                    if (mFilters != null && mFilters.isNoneEmptyOnly()) {
+                        int numItemsPreFilter = items.size();
+                        items = filterEmpty(items);
+                        totalItems -= (numItemsPreFilter - items.size());
                     }
                     setTotalItems(totalItems);
                     int i = getItemsLoaded();
@@ -952,10 +1067,17 @@ public class ItemRowAdapter extends ArrayObjectAdapter {
             @Override
             public void onResponse(BaseItemDto[] response) {
                 if (response != null && response.length > 0) {
-                    setTotalItems(response.length);
+                    List<BaseItemDto> items = List.of(response);
+                    if (mFilters != null && mFilters.isUnwatchedOnly()) {
+                        items = filterPlayed(items);
+                    }
+                    if (mFilters != null && mFilters.isNoneEmptyOnly()) {
+                        items = filterEmpty(items);
+                    }
+                    setTotalItems(items.size());
                     int i = getItemsLoaded();
                     int prevItems = i == 0 && size() > 0 ? size() : 0;
-                    for (BaseItemDto item : response) {
+                    for (BaseItemDto item : items) {
                         add(new BaseRowItem(i++, item));
                     }
                     setItemsLoaded(i);
