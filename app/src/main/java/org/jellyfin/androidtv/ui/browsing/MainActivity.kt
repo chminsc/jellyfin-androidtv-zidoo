@@ -39,6 +39,7 @@ class MainActivity : BaseActivity(R.layout.fragment_content_view) {
 			if (get<UserPreferences>()[UserPreferences.clearAudioQueueOnExit])
 				get<MediaManager>().clearAudioQueue(true)
 			super.onBackPressed()
+			finishAffinity()
 			return
 		}
 
