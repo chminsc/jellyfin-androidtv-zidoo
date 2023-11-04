@@ -17,7 +17,7 @@ import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.vanniktech.blurhash.BlurHash
 import kotlinx.coroutines.*
-import me.carleslc.kotlin.extensions.standard.*
+import me.carleslc.kotlinextensions.standard.*
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.ui.AsyncImageView.CropTypeGlide.Companion.applyCropOption
 import org.jellyfin.androidtv.util.ImageHelper

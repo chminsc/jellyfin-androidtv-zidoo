@@ -6,6 +6,7 @@ import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.ui.preference.dsl.OptionsScreen
 import org.jellyfin.androidtv.ui.preference.dsl.link
 import org.jellyfin.androidtv.ui.preference.screen.LicensesScreen
+import org.jellyfin.androidtv.util.DeviceUtils
 
 fun OptionsScreen.aboutCategory() = category {
 	setTitle(R.string.pref_about_title)
@@ -19,7 +20,14 @@ fun OptionsScreen.aboutCategory() = category {
 
 	link {
 		setTitle(R.string.pref_device_model)
-		content = "${Build.MANUFACTURER} ${Build.MODEL} , Android: ${Build.VERSION.RELEASE}, API: ${Build.VERSION.SDK_INT}"
+		content = "${Build.BRAND} ${Build.MODEL}/${Build.MANUFACTURER} , Android: ${Build.VERSION.RELEASE}, API: ${Build.VERSION.SDK_INT}"
+		icon = R.drawable.ic_tv
+	}
+
+	link {
+		setTitle(R.string.pref_device_fw)
+		content = "${DeviceUtils.getSystemPropertyCached("ro.product.version")}\n" +
+				"New Zidoo API: ${DeviceUtils.hasNewZidooApi()}"
 		icon = R.drawable.ic_tv
 	}
 

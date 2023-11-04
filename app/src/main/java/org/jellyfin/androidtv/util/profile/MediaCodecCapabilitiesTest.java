@@ -1,17 +1,23 @@
 package org.jellyfin.androidtv.util.profile;
 
+import static android.media.MediaCodecInfo.CodecProfileLevel.AV1Level3;
+import static android.media.MediaCodecInfo.CodecProfileLevel.AV1ProfileMain10;
 import static android.media.MediaCodecInfo.CodecProfileLevel.AVCLevel4;
 import static android.media.MediaCodecInfo.CodecProfileLevel.AVCProfileHigh10;
 import static android.media.MediaCodecInfo.CodecProfileLevel.H263Level10;
 import static android.media.MediaCodecInfo.CodecProfileLevel.H263Level45;
 import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCMainTierLevel5;
 import static android.media.MediaCodecInfo.CodecProfileLevel.HEVCProfileMain10;
+import static android.media.MediaFormat.MIMETYPE_VIDEO_AV1;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_AVC;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_H263;
 import static android.media.MediaFormat.MIMETYPE_VIDEO_HEVC;
 
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
+import android.os.Build;
+
+import androidx.annotation.RequiresApi;
 
 import org.jellyfin.androidtv.util.MediaUtils;
 
@@ -35,12 +41,23 @@ public class MediaCodecCapabilitiesTest  {
         return MediaUtils.checkDecoder(MIMETYPE_VIDEO_HEVC);
     }
 
+    // AV1 main=8+10bit/YUV420, high=YUV444, Professional=12bit/YUV444
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    public boolean supportsAv1() {
+        return MediaUtils.checkDecoder(MIMETYPE_VIDEO_AV1);
+    }
+
     public boolean supportsHevcMain10() {
         return hasDecoder(MIMETYPE_VIDEO_HEVC, HEVCProfileMain10, HEVCMainTierLevel5);
     }
 
     public boolean supportsAVCHigh10() {
         return hasDecoder(MIMETYPE_VIDEO_AVC, AVCProfileHigh10, AVCLevel4);
+    }
+
+    @RequiresApi(api = Build.VERSION_CODES.Q)
+    public boolean supportsAV1Main10() {
+        return hasDecoder(MIMETYPE_VIDEO_AV1, AV1ProfileMain10, AV1Level3);
     }
 
     private boolean checkDecoder(String mime, int profile, int level) {

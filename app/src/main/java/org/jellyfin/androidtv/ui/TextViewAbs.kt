@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.ViewGroup
 import androidx.appcompat.widget.AppCompatTextView
-import me.carleslc.kotlin.extensions.number.roundDiv
+import me.carleslc.kotlinextensions.number.roundDiv
 import org.jellyfin.androidtv.R
 
 class TextViewAbs @JvmOverloads constructor(

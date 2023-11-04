@@ -31,7 +31,7 @@ public class DeviceUtils {
     private static final String SHIELD_TV_MODEL = "SHIELD Android TV";
     // Zidoo
     private static final String ZIDOO_MODEL_Z9X = "Z9X";
-    private static final String ZIDOO_MANUFACTURER = "ZIDOO";
+    private static final String ZIDOO_MODEL_Z9X_P = "Z9X PRO";
 
     private static final String UNKNOWN = "Unknown";
 
@@ -52,7 +52,7 @@ public class DeviceUtils {
         return Build.MANUFACTURER != null ? Build.MANUFACTURER : UNKNOWN;
     }
 
-    private static String getSystemPropertyCached(String key) {
+    public static String getSystemPropertyCached(String key) {
         String prop = sSystemPropertyMap.get(key);
         if (prop == null) {
             prop = getSystemProperty(key, "none");
@@ -99,21 +99,40 @@ public class DeviceUtils {
         return getBuildModel().equals(SHIELD_TV_MODEL);
     }
 
+    // we have a mismatch "ZIDOO" vs "Realtek vs "rtk" for old/new API's
+    private static boolean isZidooDevice() {
+        if (getBrand().equalsIgnoreCase("ZIDOO"))
+            return true;
+        if (getManufacturer().equalsIgnoreCase("ZIDOO"))
+            return true;
+
+        return false;
+    }
+
     public static boolean isZidooRTK() {
-        return getManufacturer().equals(ZIDOO_MANUFACTURER) && getBrand().equals("rtk");
+        if (!isZidooDevice())
+            return false;
+        if (getManufacturer().equalsIgnoreCase("rtk") || getManufacturer().equalsIgnoreCase("realtek"))
+            return true;
+        if (getBrand().equalsIgnoreCase("rtk") || getBrand().equalsIgnoreCase("realtek"))
+            return true;
+
+        return false;
     }
 
     public static boolean hasNewZidooApi() {
-        if (getManufacturer().equals(ZIDOO_MANUFACTURER)) {
-            // "v6.4.42" and "v6.7.30" older "v2.3.88"
-            String version = getSystemPropertyCached("ro.product.version").replaceFirst("v", "");
+        if (isZidooDevice()) {
+            // new 2023->"v1.0.45", 2022->"v6.4.42" and "v6.7.30" older "v2.3.88"
+            String version = getSystemPropertyCached("ro.product.version").replaceFirst("v", "").replaceFirst("(_G)", "").replaceFirst("(beta)","");
             final String[] splitArray = version.split("\\.", 3);
             if (splitArray.length == 3) {
                 try {
                     int majorV = Integer.parseInt(splitArray[0]);
                     int middleV = Integer.parseInt(splitArray[1]);
                     int minorV = Integer.parseInt(splitArray[2]);
-                    if (majorV == 6 && (middleV == 4 || middleV == 7) && minorV >= 30)
+                    if (majorV == 6 && (middleV == 4 || middleV == 7) && minorV >= 30) // RTD1619
+                        return true;
+                    if (majorV == 1 && middleV == 0 && minorV >= 45) // RTD1619BPD
                         return true;
                 } catch (NumberFormatException ignored) {
                 }

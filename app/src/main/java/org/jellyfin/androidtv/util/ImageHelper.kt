@@ -4,7 +4,7 @@ import android.content.Context
 import com.bumptech.glide.Glide
 import com.bumptech.glide.Priority
 import com.bumptech.glide.request.target.Target.SIZE_ORIGINAL
-import me.carleslc.kotlin.extensions.standard.letIfTrue
+import me.carleslc.kotlinextensions.standard.letIfTrue
 import org.jellyfin.androidtv.JellyfinApplication
 import org.jellyfin.sdk.api.client.ApiClient
 import org.jellyfin.sdk.api.client.extensions.imageApi

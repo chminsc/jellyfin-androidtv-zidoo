@@ -3,8 +3,8 @@ package org.jellyfin.androidtv.util
 import androidx.annotation.IntRange
 import androidx.leanback.widget.ClassPresenterSelector
 import androidx.leanback.widget.ListRow
-import me.carleslc.kotlin.extensions.number.roundDiv
-import me.carleslc.kotlin.extensions.number.roundToInt
+import me.carleslc.kotlinextensions.number.roundDiv
+import me.carleslc.kotlinextensions.number.roundToInt
 import org.jellyfin.androidtv.JellyfinApplication
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.constant.CardInfoType

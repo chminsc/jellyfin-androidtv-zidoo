@@ -12,9 +12,9 @@ import com.bumptech.glide.module.AppGlideModule
 import com.bumptech.glide.request.RequestOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import me.carleslc.kotlin.extensions.bytes.bytes
-import me.carleslc.kotlin.extensions.bytes.gibibytes
-import me.carleslc.kotlin.extensions.bytes.megabytes
+import me.carleslc.kotlinextensions.bytes.bytes
+import me.carleslc.kotlinextensions.bytes.gibibytes
+import me.carleslc.kotlinextensions.bytes.megabytes
 import org.jellyfin.androidtv.util.Utils.getDeviceMemorySize
 import timber.log.Timber
 

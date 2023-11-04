@@ -2,7 +2,14 @@ package org.jellyfin.androidtv.util.profile
 
 import org.jellyfin.androidtv.constant.Codec
 import org.jellyfin.androidtv.util.profile.ProfileHelper.subtitleProfile
-import org.jellyfin.apiclient.model.dlna.*
+import org.jellyfin.apiclient.model.dlna.CodecProfile
+import org.jellyfin.apiclient.model.dlna.CodecType
+import org.jellyfin.apiclient.model.dlna.DeviceProfile
+import org.jellyfin.apiclient.model.dlna.DirectPlayProfile
+import org.jellyfin.apiclient.model.dlna.DlnaProfileType
+import org.jellyfin.apiclient.model.dlna.EncodingContext
+import org.jellyfin.apiclient.model.dlna.SubtitleDeliveryMethod
+import org.jellyfin.apiclient.model.dlna.TranscodingProfile
 
 @Suppress("MagicNumber")
 class ZidooPlayerProfile(
@@ -119,7 +126,10 @@ class ZidooPlayerProfile(
 			DirectPlayProfile().apply {
 				type = DlnaProfileType.Video
 				container = containerVideo.joinToString(",")
-				videoCodec = codecsVideo.joinToString(",")
+				videoCodec = buildList {
+					addAll(codecsVideo)
+					if (ProfileHelper.MediaTest.supportsAv1()) add(Codec.Video.AV1)
+				}.joinToString(",")
 				audioCodec = forcedAudioCodec ?: buildList {
 					addAll(codecsDolby + codecsCommon + codecsPcm + codecsRare)
 					if (isDTSEnabled) addAll(codecsDTS)

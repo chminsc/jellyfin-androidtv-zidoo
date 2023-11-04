@@ -12,7 +12,7 @@ plugins {
 android {
 	namespace = "org.jellyfin.androidtv"
 	compileSdk = gradleLocalProperties(rootDir).getProperty("COMPILE_SDK_NR", "32").toInt()
-	ndkVersion = "25.1.8937393"
+	ndkVersion = "26.1.10909125"
 
 	defaultConfig {
 		minSdk = gradleLocalProperties(rootDir).getProperty("MIN_SDK_NR", "23").toInt()

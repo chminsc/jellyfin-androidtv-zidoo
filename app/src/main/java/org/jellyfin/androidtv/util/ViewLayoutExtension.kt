@@ -3,7 +3,7 @@ package org.jellyfin.androidtv.util
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-import me.carleslc.kotlin.extensions.standard.letOrElse
+import me.carleslc.kotlinextensions.standard.letOrElse
 
 fun View.setPaddingHorizontal(hPadding: Int) = this.setPadding(hPadding, paddingTop, hPadding, paddingBottom)
 fun View.setPaddingVertical(vPadding: Int) = this.setPadding(paddingLeft, vPadding, paddingRight, vPadding)

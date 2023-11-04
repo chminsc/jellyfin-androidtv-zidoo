@@ -4,7 +4,11 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import androidx.work.*
+import androidx.work.BackoffPolicy
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.await
 import com.bumptech.glide.Glide
 import com.vanniktech.blurhash.BlurHash
 import kotlinx.coroutines.Dispatchers
@@ -55,7 +59,7 @@ class JellyfinApplication : Application() {
 			// Recreate periodic workers
 			workManager.enqueueUniquePeriodicWork(
 				LeanbackChannelWorker.PERIODIC_UPDATE_REQUEST_NAME,
-				ExistingPeriodicWorkPolicy.REPLACE,
+				ExistingPeriodicWorkPolicy.UPDATE,
 				PeriodicWorkRequestBuilder<LeanbackChannelWorker>(1, TimeUnit.HOURS)
 					.setBackoffCriteria(BackoffPolicy.LINEAR, 10, TimeUnit.MINUTES)
 					.build()

@@ -20,24 +20,37 @@ import androidx.annotation.DrawableRes
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.doOnPreDraw
-import me.carleslc.kotlin.extensions.standard.isNotNull
-import me.carleslc.kotlin.extensions.strings.isNotNullOrBlank
-import me.carleslc.kotlin.extensions.time.milliseconds
+import me.carleslc.kotlinextensions.standard.isNotNull
+import me.carleslc.kotlinextensions.time.milliseconds
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.preference.UserPreferences
 import org.jellyfin.androidtv.preference.constant.RatingType
 import org.jellyfin.androidtv.ui.itemhandling.BaseRowItem
-import org.jellyfin.androidtv.util.*
+import org.jellyfin.androidtv.util.TimeUtils
 import org.jellyfin.androidtv.util.apiclient.getProgramSubText
 import org.jellyfin.androidtv.util.apiclient.getProgramUnknownChannelName
 import org.jellyfin.androidtv.util.apiclient.isNew
+import org.jellyfin.androidtv.util.dp
+import org.jellyfin.androidtv.util.getColorFromAttribute
+import org.jellyfin.androidtv.util.runtimeTicksToMs
+import org.jellyfin.androidtv.util.saturationHSV
 import org.jellyfin.androidtv.util.sdk.compat.asSdk
-import org.jellyfin.sdk.model.api.*
+import org.jellyfin.androidtv.util.setMarginVertical
+import org.jellyfin.androidtv.util.setPaddingHorizontal
+import org.jellyfin.androidtv.util.sp
+import org.jellyfin.sdk.model.api.BaseItemDto
+import org.jellyfin.sdk.model.api.BaseItemKind
+import org.jellyfin.sdk.model.api.MediaSourceInfo
+import org.jellyfin.sdk.model.api.MediaStreamType
+import org.jellyfin.sdk.model.api.SeriesStatus
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import strings.isNotNullOrBlank
 import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 
 class InfoRowView @JvmOverloads constructor(

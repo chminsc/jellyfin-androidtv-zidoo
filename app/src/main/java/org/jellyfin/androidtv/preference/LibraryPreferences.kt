@@ -1,6 +1,6 @@
 package org.jellyfin.androidtv.preference
 
-import me.carleslc.kotlin.extensions.number.clamp
+import me.carleslc.kotlinextensions.number.clamp
 import org.jellyfin.androidtv.constant.CardInfoType
 import org.jellyfin.androidtv.constant.CardSpacing
 import org.jellyfin.androidtv.constant.GridDirection

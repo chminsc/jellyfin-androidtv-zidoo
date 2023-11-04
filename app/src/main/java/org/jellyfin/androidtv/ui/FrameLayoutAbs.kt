@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.ViewGroup
 import android.widget.FrameLayout
-import me.carleslc.kotlin.extensions.number.roundDiv
+import me.carleslc.kotlinextensions.number.roundDiv
 import org.jellyfin.androidtv.R
 
 open class FrameLayoutAbs @JvmOverloads constructor(

@@ -1,8 +1,17 @@
 package org.jellyfin.androidtv.util.profile
 
+import android.os.Build
 import org.jellyfin.androidtv.constant.Codec
 import org.jellyfin.androidtv.util.DeviceUtils
-import org.jellyfin.apiclient.model.dlna.*
+import org.jellyfin.apiclient.model.dlna.CodecProfile
+import org.jellyfin.apiclient.model.dlna.CodecType
+import org.jellyfin.apiclient.model.dlna.DirectPlayProfile
+import org.jellyfin.apiclient.model.dlna.DlnaProfileType
+import org.jellyfin.apiclient.model.dlna.ProfileCondition
+import org.jellyfin.apiclient.model.dlna.ProfileConditionType
+import org.jellyfin.apiclient.model.dlna.ProfileConditionValue
+import org.jellyfin.apiclient.model.dlna.SubtitleDeliveryMethod
+import org.jellyfin.apiclient.model.dlna.SubtitleProfile
 
 object ProfileHelper {
 	// H264 codec levels https://en.wikipedia.org/wiki/Advanced_Video_Coding#Levels
@@ -10,7 +19,40 @@ object ProfileHelper {
 	private const val H264_LEVEL_5_1 = "51"
 	private const val H264_LEVEL_5_2 = "52"
 
-	private val MediaTest by lazy { MediaCodecCapabilitiesTest() }
+	val MediaTest by lazy { MediaCodecCapabilitiesTest() }
+
+	val deviceAv1CodecProfile by lazy {
+		if (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+				MediaTest.supportsAv1()
+			} else {
+				TODO("VERSION.SDK_INT < Q")
+			}
+		) {
+			CodecProfile().apply {
+				type = CodecType.Video
+				codec = Codec.Video.AV1
+				conditions = arrayOf(av1VideoProfileCondition)
+			}
+		} else {
+			null
+		}
+	}
+
+	val av1VideoProfileCondition by lazy {
+		ProfileCondition(
+			ProfileConditionType.EqualsAny,
+			ProfileConditionValue.VideoProfile,
+			listOfNotNull(
+				"main",
+				if (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+						MediaTest.supportsAV1Main10()
+					} else {
+						TODO("VERSION.SDK_INT < Q")
+					}
+				) "main 10" else null
+			).joinToString("|")
+		)
+	}
 
 	val deviceHevcCodecProfile by lazy {
 		if (MediaTest.supportsHevc()) {

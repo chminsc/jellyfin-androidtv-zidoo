@@ -70,6 +70,7 @@ object Codec {
 		const val VP8 = "vp8"
 		const val VP9 = "vp9"
 		const val VC1 = "vc1"
+		const val AV1 = "av1"
 	}
 
 	object Subtitle {

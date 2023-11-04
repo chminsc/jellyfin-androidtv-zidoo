@@ -197,11 +197,13 @@
     <string name="lbl_subtitle_track">Select subtitle track</string>
     <string name="msg_external_path">This feature will only work if you have properly set up your library on the server with network paths or path substitution and the client you are using can directly access these locations over the network.\n
         Path substitution is the \'Shared network folder:\' option on the server, in library/folders.\n\n
+        *** New Zidoo API Detected! ***\n\n
         Formats:\n smb://smb_user:smb_password@server_ip/share/folder\n nfs://server_ip/nfs_export\n nfs://server_ip/nfs_export/media \n\n
         Examples:\n smb://andy:1234@192.168.1.101/htpc-share/series\n nfs://192.168.1.101/home/andy/movies\n nfs://192.168.1.101/home/andy/series
     </string>
     <string name="msg_external_path_legacy">This feature will only work if you have properly set up your library on the server with network paths or path substitution and the client you are using can directly access these locations over the network.\n
         Path substitution is the \'Shared network folder:\' option on the server, in library/folders.\n\n
+        *** Legacy Zidoo API Detected! ***\n\n
         Formats:\n smb://smb_user:smb_password@server_ip/share/folder\n nfs://server_ip/nfs_export/:\n nfs://server_ip/nfs_export/:/media \n\n
         Examples:\n smb://andy:1234@192.168.1.101/htpc-share/series\n nfs://192.168.1.101/home/andy/movies/:\n nfs://192.168.1.101/home/andy/:/series
     </string>
@@ -315,6 +317,7 @@
     <string name="pref_libvlc_audio_delay_title">Default audio delay for LibVLC</string>
     <string name="pref_app_theme">App theme</string>
     <string name="pref_device_model">Device model</string>
+    <string name="pref_device_fw">Device firmware</string>
     <string name="pref_languages_subtitle">Subtitle Language</string>
     <string name="pref_languages_audio">Audio Language</string>
     <string name="grid_direction">Grid Direction</string>

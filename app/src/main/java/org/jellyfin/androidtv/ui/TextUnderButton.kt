@@ -8,9 +8,9 @@ import android.widget.FrameLayout
 import androidx.annotation.DrawableRes
 import androidx.core.view.isVisible
 import androidx.core.view.setPadding
-import me.carleslc.kotlin.extensions.strings.isNotNullOrBlank
 import org.jellyfin.androidtv.databinding.TextUnderButtonBinding
 import org.jellyfin.androidtv.util.dp
+import strings.isNotNullOrBlank
 
 class TextUnderButton @JvmOverloads constructor(
 	context: Context,

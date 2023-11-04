@@ -6,7 +6,7 @@ import android.graphics.Canvas
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
-import me.carleslc.kotlin.extensions.number.roundDiv
+import me.carleslc.kotlinextensions.number.roundDiv
 import org.jellyfin.androidtv.R
 
 class SpaceAbs @JvmOverloads constructor(
@@ -49,7 +49,7 @@ class SpaceAbs @JvmOverloads constructor(
      * @param canvas an unused parameter.
      */
     @SuppressLint("MissingSuperCall")
-    override fun draw(canvas: Canvas?) {
+    override fun draw(canvas: Canvas) {
 
     }
 

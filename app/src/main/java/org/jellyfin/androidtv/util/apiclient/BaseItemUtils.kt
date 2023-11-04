@@ -4,7 +4,6 @@ package org.jellyfin.androidtv.util.apiclient
 
 import android.content.Context
 import android.text.format.DateFormat
-import me.carleslc.kotlin.extensions.strings.isNotNullOrBlank
 import org.jellyfin.androidtv.R
 import org.jellyfin.androidtv.data.model.ChapterItemInfo
 import org.jellyfin.androidtv.ui.livetv.TvManager
@@ -21,8 +20,10 @@ import org.jellyfin.sdk.api.client.extensions.imageApi
 import org.jellyfin.sdk.model.api.ImageType
 import org.jellyfin.sdk.model.serializer.toUUID
 import org.koin.java.KoinJavaComponent.inject
+import strings.isNotNullOrBlank
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 // TODO Feature Envy!!! Wants to live in BaseItemDto.
 fun BaseItemDto.isLiveTv() =
