@@ -1,12 +1,10 @@
 
-<h1 align="center">Jellyfin Android TV Zidoo-Edition</h1>  
-<h3 align="center">Fork of the <a href="https://jellyfin.org">Jellyfin Project</a></h3>  
+<h1 align="center">a Jellyfin TV Client, optimized for Zidoo media players aka "Zidoo Edition"</h1>  
+<h3 align="center">based on the <a href="https://github.com/jellyfin/jellyfin-androidtv">official Jellyfin TV Client</a></h3>  
   
 ---  
   
 <p align="center">  
-<img alt="Logo banner" src="https://raw.githubusercontent.com/jellyfin/jellyfin-ux/master/branding/SVG/banner-logo-solid.svg?sanitize=true"/>  
-<br/><br/>  
 <a href="https://github.com/jellyfin/jellyfin-androidtv">  
 <img alt="GPL 2.0 License" src="https://img.shields.io/github/license/jellyfin/jellyfin-androidtv.svg"/>  
 </a>  
@@ -23,11 +21,15 @@
 <img alt="Join our Subreddit" src="https://img.shields.io/badge/reddit-r%2Fjellyfin-%23FF5700.svg"/>  
 </a>  
   
-"Zidoo-Edition" is a unofficial community fork of the Jellyfin Android TV client, adapted to better run on [Zidoo media players](https://www.zidoo.tv) running Android 9+.
+"Zidoo-Edition" is a unofficial community fork, based on the official Jellyfin Android TV client, adapted to better run on [Zidoo media players](https://www.zidoo.tv).
 ### Release [downloads here](https://github.com/Andy2244/jellyfin-androidtv-zidoo/releases)
 TIP: you can directly install from your browser via `http://zidoo_ip:18888` web interface
-### App ONLY works with latest 10.8.1+ server's, beta7 is the last version that work's for 10.8.0 server's!
+### App ONLY works with latest 10.8.1+ JF server's.
+### Firmware 6.(4/7).40+ is also recommended, but not required.
 - feature roadmap
+    - better "smart views" and more sorting/filter options _(similar to the webclient)_
+    	- option to select audio/subtitles before playback
+    - "skip next", custom "skip foreward/back" handling for zidoo-player
     - ~add smart "original language" audio selection logic based on tmdb id's~ _done_
     - ~add better transcoding support and fallback's for unsupported codecs~ _done_
     - ~add more audio-only transcoding options (DD only, PCM 5.1 -> DD5.1)~ _done_
@@ -48,7 +50,7 @@ TIP: you can directly install from your browser via `http://zidoo_ip:18888` web 
    - smb, nfs support via `Direct Path` option
    - "smart" audio/subtitle selection logic
    - working tarnscoding for unsupported formats/codec's
- - UI layout fixes
+ - UI layout fixes, changes
 	 - cutoff grids, ui scaling fixed
 ### How to use with "Direct Path" option (smb/nfs):
 - setup your Jellyfin server [library's](https://jellyfin.org/docs/general/server/libraries.html) with network paths or path substitution via `Shared network folder:` option
@@ -65,6 +67,7 @@ TIP: you can directly install from your browser via `http://zidoo_ip:18888` web 
  		- `nfs://192.168.1.101/mnt/media/:/movies` -> with nfs export `/mnt/media`
 ![setting](https://user-images.githubusercontent.com/5340247/174437861-c1db621a-d4b2-4696-b33c-5152c0c67fb6.png)
 - enable the `Direct Path` option in the JellyfinTv client
+### NOTE: starting with firmware 6.(4/7).30+ you dont need the special `/:` NFS root-marker anymore!
 ### Community
 - **for major bugs/issues regarding the Zidoo-Edition, please open a github issue**
 - for questions, suggestions or help use the [Zidoo forum](http://forum.zidoo.tv/index.php)
