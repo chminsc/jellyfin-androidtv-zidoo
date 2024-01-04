@@ -1,0 +1,30 @@
+1. LegacyImageCardView.java中设置每个card，下面的字体大小：
+
+    private void adaptLayoutSizes(int viewWidth, int viewHeight) {
+            ....
+            mTextSizeSP = textSizeSP;
+            mTextSizeSP = 20;
+
+2. 在LayoutHelper.kt以及dimens.xml中设置首页的Card大小等
+在integers.xml中设置continue watching的每行显示数
+    <integer name="default_card_rows_per_screen">2</integer>
+3. 在HomeFragmentHelper中设置首页每行显示的数量
+4. ImageUtils中设置Poster等大小
+BaseRowItem,似乎是每个Card
+
+
+5. BrowserGridFragment.java， 主页中，点动画，记录片等会进入这里（但是电影又不进入）
+    。spacing可以设置间距
+      private int mGridSize = 9;并同步修改：(也可以不修改，在设置中可以改）
+      mGridSize = LibraryPreferences.Companion.getGridSizeChecked(libraryPreferences.get(LibraryPreferences.Companion.getGridSize()), mGridDirection, mImageType);
+      mGridSize = 9;
+      可以设置all movies, documentary等每行显示数
+
+在BrowserRowDef中有首页的每行的header的设置（比如Live TV, Continue Wathcing,My Movies等）
+
+SmallListRow,用于显示My Media，小号的
+
+在app setting中把间距设置为最大即可
+
+在LibraryPrefernces.kt中读取相关设置
+在DisplayPreferencesStores.kt中，从服务器读写这些设置。

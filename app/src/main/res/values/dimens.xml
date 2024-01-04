@@ -3,12 +3,12 @@
     <dimen name="overscan_horizontal">27dp</dimen>
     <dimen name="overscan_vertical">48dp</dimen>
 <!--default/minimal safe areas-->
-    <dimen name="safe_area_vertical_small">3dp</dimen>
-    <dimen name="safe_area_vertical">10dp</dimen>
-    <dimen name="safe_area_vertical_large">20dp</dimen>
-    <dimen name="safe_area_horizontal_small">5dp</dimen>
-    <dimen name="safe_area_horizontal">15dp</dimen>
-    <dimen name="safe_area_horizontal_large">30dp</dimen>
+    <dimen name="safe_area_vertical_small">20dp</dimen>
+    <dimen name="safe_area_vertical">20dp</dimen>
+    <dimen name="safe_area_vertical_large">100dp</dimen>
+    <dimen name="safe_area_horizontal_small">20dp</dimen>
+    <dimen name="safe_area_horizontal">20dp</dimen>
+    <dimen name="safe_area_horizontal_large">120dp</dimen>
 
 <!--card values-->
     <dimen name="card_text_size_primary">14sp</dimen>
@@ -27,7 +27,9 @@
     <fraction name="details_info_layout_height_pct">42%</fraction>
     <fraction name="details_info_layout_small_height_pct">25%</fraction>
     <fraction name="toolbar_layout_height_pct">4%</fraction>
+<!--    设置首页，每行Title字的大小-->
     <fraction name="row_header_height_pct_abs">4%</fraction>
+
     <fraction name="button_bar_layout_height_pct">10%</fraction>
     <fraction name="info_row_layout_height_pct">3%</fraction>
     <fraction name="title_layout_height_pct">4%</fraction>
@@ -49,18 +51,18 @@
 <!--    disable selection alpha for headers-->
     <fraction tools:override="true" name="lb_browse_header_unselect_alpha">80%</fraction>
 <!--Widget.Leanback.Headers.VerticalGridView-->
-    <dimen tools:override="true" name="lb_browse_headers_vertical_spacing">0dp</dimen>
+    <dimen tools:override="true" name="lb_browse_headers_vertical_spacing">10dp</dimen>
     <dimen tools:override="true" format="float" name="lb_browse_header_select_scale">1.0</dimen>
 
 <!--row padding NOTE: only row not header !-->
-    <dimen tools:override="true" name="lb_browse_item_horizontal_spacing">0dp</dimen>
-    <dimen tools:override="true" name="lb_browse_item_vertical_spacing">0dp</dimen>
+    <dimen tools:override="true" name="lb_browse_item_horizontal_spacing">35dp</dimen>
+    <dimen tools:override="true" name="lb_browse_item_vertical_spacing">35dp</dimen>
 
-    <dimen tools:override="true" name="lb_vertical_grid_padding_bottom">0dp</dimen>
+    <dimen tools:override="true" name="lb_vertical_grid_padding_bottom">35dp</dimen>
 
-    <dimen tools:override="true" name="lb_browse_selected_row_top_padding">0dp</dimen>
-    <dimen tools:override="true" name="lb_browse_expanded_selected_row_top_padding">0dp</dimen>
-    <dimen tools:override="true" name="lb_browse_expanded_row_no_hovercard_bottom_padding">0dp</dimen>
+    <dimen tools:override="true" name="lb_browse_selected_row_top_padding">35dp</dimen>
+    <dimen tools:override="true" name="lb_browse_expanded_selected_row_top_padding">35dp</dimen>
+    <dimen tools:override="true" name="lb_browse_expanded_row_no_hovercard_bottom_padding">35dp</dimen>
 
     <string name="longDummyText30x8" translatable="false">111111111111111111111111111111\n222222222222222222222222222222\n333333333333333333333333333333\n444444444444444444444444444444\n555555555555555555555555555555\n666666666666666666666666666666\n777777777777777777777777777777\n888888888888888888888888888888</string>
     <string name="longDummyText30x10" translatable="false">111111111111111111111111111111\n222222222222222222222222222222\n333333333333333333333333333333\n444444444444444444444444444444\n555555555555555555555555555555\n666666666666666666666666666666\n777777777777777777777777777777\n888888888888888888888888888888\n999999999999999999999999999999\n000000000000000000000000000000</string>

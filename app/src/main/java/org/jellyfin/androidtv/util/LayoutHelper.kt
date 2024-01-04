@@ -13,8 +13,9 @@ import org.jellyfin.androidtv.constant.GridDirection
 import org.jellyfin.androidtv.ui.presentation.PositionableListRowPresenter
 
 object LayoutHelper {
-    private const val SMALL_ROW_RATIO = 2 // half poster height
-    private const val THUMB_ROW_RATIO = 1.0 / 0.75 // 1.333..
+    private const val SMALL_ROW_RATIO = 1.72 // half poster height
+	//用于修改continue watching, next up等
+    private const val THUMB_ROW_RATIO = 1.4 // 1.333..
 
     fun getScreenAspectRatio(): Double = JellyfinApplication.appContext.resources.let { res ->
        res.displayMetrics.heightPixels.toDouble() / res.displayMetrics.widthPixels.toDouble()
@@ -68,7 +69,7 @@ object LayoutHelper {
 
             val rowPresenter = PositionableListRowPresenter(rowContainerHeight - rowHeaderHeightPx, rowHeaderHeightPx)
             val thumbRowPresenter = PositionableListRowPresenter(rowContainerHeight.div(THUMB_ROW_RATIO).toInt() - rowHeaderHeightPx, rowHeaderHeightPx)
-            val smallRowPresenter = PositionableListRowPresenter(rowContainerHeight.floorDiv(SMALL_ROW_RATIO) - rowHeaderHeightPx, rowHeaderHeightPx)
+            val smallRowPresenter = PositionableListRowPresenter(rowContainerHeight.div(SMALL_ROW_RATIO).toInt() - rowHeaderHeightPx, rowHeaderHeightPx)
 
             val absRowContainerHeightPx = res.displayMetrics.heightPixels.minus(extraMarginPx).times(res.getFraction(R.fraction.button_row_layout_height_pct, 1, 1)).roundToInt()
             val smallAbsRowPresenter = PositionableListRowPresenter(absRowContainerHeightPx - rowHeaderHeightPx, rowHeaderHeightPx)

@@ -113,10 +113,11 @@ class HomeFragmentHelper(
 	}
 
 	companion object {
+		// 设置首页的显示数量
 		// Maximum amount of items loaded for a row
-		private const val ITEM_LIMIT_RESUME = 50
-		private const val ITEM_LIMIT_RECORDINGS = 40
-		private const val ITEM_LIMIT_NEXT_UP = 50
+		private const val ITEM_LIMIT_RESUME = 20
+		private const val ITEM_LIMIT_RECORDINGS = 20
+		private const val ITEM_LIMIT_NEXT_UP = 20
 		private const val ITEM_LIMIT_ON_NOW = 20
 		internal val DEFAULT_TRIGGERS = arrayOf(ChangeTriggerType.VideoQueueChange, ChangeTriggerType.TvPlayback, ChangeTriggerType.MoviePlayback, ChangeTriggerType.LibraryUpdated)
 	}

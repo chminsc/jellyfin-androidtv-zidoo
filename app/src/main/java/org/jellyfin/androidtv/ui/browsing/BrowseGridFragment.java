@@ -5,6 +5,7 @@ import static org.koin.java.KoinJavaComponent.inject;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
@@ -83,6 +84,7 @@ import kotlin.Lazy;
 import kotlinx.serialization.json.Json;
 import timber.log.Timber;
 
+//显示全部内容的时候。比如全部的电影，记录片等。
 public class BrowseGridFragment extends Fragment {
     private final static int CHUNK_SIZE_MINIMUM = 50;
     private final static int VIEW_SELECT_UPDATE_DELAY = 100; // delay in ms until we update the top-row info for a selected item
@@ -97,7 +99,7 @@ public class BrowseGridFragment extends Fragment {
     private CardPresenter mCardPresenter;
 
     private boolean justLoaded = true;
-    private int mGridSize = 7;
+    private int mGridSize = 8;
     private ImageType mImageType = ImageType.POSTER;
     private GridDirection mGridDirection = GridDirection.VERTICAL;
     private CardInfoType mCardInfoType = CardInfoType.NO_INFO;
@@ -203,10 +205,12 @@ public class BrowseGridFragment extends Fragment {
             createGridPresenter();
 
         int spacing = Utils.convertDpToPixel(requireContext(), libraryPreferences.get(LibraryPreferences.Companion.getCardSpacing()).getSizeDP());
-
         int paddingTop = 0;
         int paddingBottom = requireContext().getResources().getDimensionPixelSize(R.dimen.safe_area_vertical);
         int paddingH = requireContext().getResources().getDimensionPixelSize(R.dimen.safe_area_horizontal_small);
+
+
+        spacing = 50;
 
         FocusZoomSize zoom = KoinJavaComponent.<UserPreferences>get(UserPreferences.class).get(UserPreferences.Companion.getFocusZoomSize());
         if (zoom != FocusZoomSize.NONE) {
@@ -433,7 +437,6 @@ public class BrowseGridFragment extends Fragment {
         mCardInfoType = libraryPreferences.get(LibraryPreferences.Companion.getCardInfoType());
         mGridDirection = libraryPreferences.get(LibraryPreferences.Companion.getGridDirection());
         mGridSize = LibraryPreferences.Companion.getGridSizeChecked(libraryPreferences.get(LibraryPreferences.Companion.getGridSize()), mGridDirection, mImageType);
-
         int newHash = libraryPreferences.getUiSettingsHash();
         if (mLibrarySettingsUiHash != newHash) {
             mLibrarySettingsUiHash = newHash;

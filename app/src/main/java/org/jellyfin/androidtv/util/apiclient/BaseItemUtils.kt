@@ -139,12 +139,21 @@ fun org.jellyfin.sdk.model.api.BaseItemDto.getProgramSubText(context: Context) =
 	if (startDate?.dayOfYear != Calendar.getInstance()[Calendar.DAY_OF_YEAR])
 		append(TimeUtils.getFriendlyDate(context, TimeUtils.getDate(startDate)), " ")
 
+	var isoDateTime = startDate
+	var compatibleDateTime = isoDateTime.toString().replace("T", " ")
+	val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+	val startDateEdit = formatter.parse(compatibleDateTime)
+
+	isoDateTime = endDate
+	compatibleDateTime = isoDateTime.toString().replace("T", " ")
+	var endDateEdit = formatter.parse(compatibleDateTime)
+
 	// Add the start and end time
 	val dateFormat = DateFormat.getTimeFormat(context)
 	append(context.getString(
 		R.string.lbl_time_range,
-		dateFormat.format(startDate),
-		dateFormat.format(endDate)
+		dateFormat.format(startDateEdit),
+		dateFormat.format(endDateEdit)
 	))
 }
 

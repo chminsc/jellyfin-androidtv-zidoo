@@ -16,7 +16,7 @@ android {
 
 	defaultConfig {
 		minSdk = gradleLocalProperties(rootDir).getProperty("MIN_SDK_NR", "23").toInt()
-		targetSdk = gradleLocalProperties(rootDir).getProperty("TARGET_SDK_NR", "32").toInt()
+		targetSdkVersion(gradleLocalProperties(rootDir).getProperty("TARGET_SDK_NR", "32").toInt())
 
 		// Release version
 		applicationId = namespace
@@ -24,7 +24,7 @@ android {
 		versionCode = getVersionCode(versionName!!)
 		setProperty("archivesBaseName", "jellyfin-androidtv-v$versionName")
 
-		ndk.abiFilters.addAll(setOf("armeabi-v7a","x86"))
+		ndk.abiFilters.addAll(setOf("armeabi-v7a","x86","arm64-v8a"))
 	}
 
 	sourceSets["main"].java.srcDirs("src/main/kotlin")
@@ -38,13 +38,19 @@ android {
 
 	compileOptions {
 		isCoreLibraryDesugaringEnabled = true
-        sourceCompatibility = JavaVersion.valueOf(gradleLocalProperties(rootDir).getProperty("JAVA_VERSION", "VERSION_1_8"))
-        targetCompatibility = JavaVersion.valueOf(gradleLocalProperties(rootDir).getProperty("JAVA_VERSION", "VERSION_1_8"))
+		sourceCompatibility = JavaVersion.valueOf(
+			gradleLocalProperties(rootDir).getProperty(
+				"JAVA_VERSION",
+				"VERSION_1_8"
+			)
+		)
+		targetCompatibility = JavaVersion.valueOf(gradleLocalProperties(rootDir).getProperty("JAVA_VERSION", "VERSION_1_8"))
     }
 
 	kotlinOptions {
 		jvmTarget = gradleLocalProperties(rootDir).getProperty("KOTLIN_JVM_TARGET", "1.8")
 	}
+
 
 	kotlin {
 		jvmToolchain {

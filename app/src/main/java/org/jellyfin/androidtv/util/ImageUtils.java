@@ -28,6 +28,7 @@ public class ImageUtils {
     public static final double ASPECT_RATIO_7_9 = 7.0 / 9.0;
     public static final double ASPECT_RATIO_16_9 = 16.0 / 9.0;
 
+//    ASPECT_RATIO_POSTER 用于设置主要poster大小（但是不影响movies下的continue watching)
     public static final double ASPECT_RATIO_POSTER = ASPECT_RATIO_2_3; // NOTE: TV primary is 680 / 1000 so make sure we centerCrop
     public static final double ASPECT_RATIO_POSTER_WIDE = ASPECT_RATIO_7_9;
     public static final double ASPECT_RATIO_THUMB = ASPECT_RATIO_16_9;

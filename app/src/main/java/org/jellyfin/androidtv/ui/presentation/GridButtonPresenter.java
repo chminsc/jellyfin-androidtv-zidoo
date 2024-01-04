@@ -46,7 +46,6 @@ public class GridButtonPresenter extends Presenter {
     public ViewHolder onCreateViewHolder(ViewGroup parent) {
         LegacyImageCardView cardView = new LegacyImageCardView(parent.getContext(), mShowInfo ? CardInfoType.UNDER_MINI : CardInfoType.NO_INFO, parent);
         cardView.setMainImageAspect(ImageUtils.ASPECT_RATIO_SQUARE);
-
         return new ViewHolder(cardView);
     }
 

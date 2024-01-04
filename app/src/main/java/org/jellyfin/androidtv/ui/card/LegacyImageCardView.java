@@ -230,6 +230,7 @@ public class LegacyImageCardView extends CardView {
         int textSizeSP = Math.min(Math.round(Utils.lerp(10, 18, diagonal, MIN_DIAGONAL, MAX_DIAGONAL)), maxTextSizeSP);
         if (textSizeSP != mTextSizeSP) {
             mTextSizeSP = textSizeSP;
+            mTextSizeSP = 20;
 //            Timber.w("adaptTextSizes: SP<%s>", mTextSizeSP);
             binding.titleText.setTextSize(TypedValue.COMPLEX_UNIT_SP, mTextSizeSP);
             binding.contentText.setTextSize(TypedValue.COMPLEX_UNIT_SP, mTextSizeSP - 1);

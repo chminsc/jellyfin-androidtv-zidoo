@@ -22,8 +22,18 @@ android {
 
 	compileOptions {
 		isCoreLibraryDesugaringEnabled = false
-		sourceCompatibility = JavaVersion.valueOf(gradleLocalProperties(rootDir).getProperty("JAVA_VERSION", "VERSION_1_8"))
-		targetCompatibility = JavaVersion.valueOf(gradleLocalProperties(rootDir).getProperty("JAVA_VERSION", "VERSION_1_8"))
+		sourceCompatibility = JavaVersion.valueOf(
+			gradleLocalProperties(rootDir).getProperty(
+				"JAVA_VERSION",
+				"VERSION_1_8"
+			)
+		)
+		targetCompatibility = JavaVersion.valueOf(
+			gradleLocalProperties(rootDir).getProperty(
+				"JAVA_VERSION",
+				"VERSION_1_8"
+			)
+		)
 	}
 
 	kotlinOptions {

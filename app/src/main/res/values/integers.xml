@@ -7,5 +7,5 @@
     <integer name="card_focus_duration">150</integer>
 
 <!--    Determines the default row_size -> card size. So we want to see those many rows in fullscreen -->
-    <integer name="default_card_rows_per_screen">3</integer>
+    <integer name="default_card_rows_per_screen">2</integer>
 </resources>
